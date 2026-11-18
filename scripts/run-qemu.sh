@@ -14,11 +14,19 @@ test -f ChatOS.iso || {
     exit 1
 }
 
-exec qemu-system-x86_64 \
-    -machine q35 \
-    -cpu qemu64 \
-    -m 512M \
-    -serial stdio \
-    -no-reboot \
-    -no-shutdown \
+QEMU_ARGS=(
+    -machine q35
+    -cpu qemu64
+    -m 512M
+    -serial stdio
+    -no-reboot
+    -no-shutdown
     -cdrom ChatOS.iso
+)
+
+# Supply an OVMF firmware image to exercise the ISO's UEFI boot path.
+if [[ -n "${OVMF_CODE:-}" ]]; then
+    QEMU_ARGS=(-bios "$OVMF_CODE" "${QEMU_ARGS[@]}")
+fi
+
+exec qemu-system-x86_64 "${QEMU_ARGS[@]}"
