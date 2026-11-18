@@ -72,13 +72,13 @@ Prerequisites:
 Build the bootable ISO (set LIMINE_DIR to the directory containing the Limine binaries):
 
     rustup target add x86_64-unknown-none
-    LIMINE_DIR=/path/to/limine ./scripts/build-iso.sh
+    LIMINE_DIR=/path/to/limine bash scripts/build-iso.sh
 
 Run it in QEMU:
 
-    ./scripts/run-qemu.sh
+    bash scripts/run-qemu.sh
 
-The initial kernel reports startup over the emulated serial console. Build and boot instructions will expand as memory management, interrupts, and device support are added.
+The ISO includes Limine BIOS and UEFI boot paths. The QEMU helper uses the default firmware; set OVMF_CODE to an OVMF firmware image to test UEFI boot. The initial kernel reports startup over the emulated serial console. Build and boot instructions will expand as memory management, interrupts, and device support are added.
 
 ## Development roadmap
 
