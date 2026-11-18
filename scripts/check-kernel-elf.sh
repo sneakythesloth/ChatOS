@@ -16,7 +16,7 @@ headers="$(readelf -lW "$ELF")"
 printf '%s\n' "$headers"
 
 load_count=0
-while read -r virtual physical flags; do
+while read -r virtual physical flags execute; do
     [[ -n "$virtual" ]] || continue
     load_count=$((load_count + 1))
 
@@ -45,7 +45,7 @@ while read -r virtual physical flags; do
         echo "PT_LOAD is both writable and executable (W^X violation)." >&2
         exit 1
     fi
-done < <(readelf -lW "$ELF" | awk '$1 == "LOAD" { print $3, $4, $7 }')
+done < <(readelf -lW "$ELF" | awk '$1 == "LOAD" { print $3, $4, $7 $8 }')
 
 if (( load_count < 3 )); then
     echo "Expected at least 3 PT_LOAD segments, found $load_count." >&2
