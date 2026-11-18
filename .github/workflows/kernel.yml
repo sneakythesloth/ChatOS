@@ -34,6 +34,15 @@ jobs:
         run: LIMINE_DIR="$PWD/limine" bash scripts/build-iso.sh
       - name: Boot ChatOS in QEMU
         run: bash scripts/test-qemu-boot.sh
+      - name: Test CPU exception handling in QEMU
+        env:
+          LIMINE_DIR: ${{ github.workspace }}/limine
+          CHATOS_EXCEPTION_SELF_TEST: "1"
+          EXPECTED_SERIAL_MARKER: "!!! CHATOS CPU EXCEPTION !!!"
+          EXPECTED_PANIC_MARKER: "CPU exception is fatal; system halted."
+        run: |
+          bash scripts/build-iso.sh
+          bash scripts/test-qemu-boot.sh
       - name: Upload serial boot log
         if: always()
         uses: actions/upload-artifact@v4
