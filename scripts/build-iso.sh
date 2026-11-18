@@ -5,10 +5,10 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 LIMINE_DIR="${LIMINE_DIR:-.}"
-KERNEL="target/x86_64-unknown-none/release/chatos-kernel"
+KERNEL="build/chatos.elf"
 ISO_ROOT="iso_root"
 
-for tool in cargo xorriso; do
+for tool in clang ld.lld xorriso; do
     command -v "$tool" >/dev/null 2>&1 || {
         echo "Missing required tool: $tool" >&2
         exit 1
@@ -23,7 +23,7 @@ for file in "$LIMINE_DIR/limine-bios-cd.bin" "$LIMINE_DIR/limine-uefi-cd.bin" "$
     }
 done
 
-cargo build --release
+bash scripts/build-kernel.sh
 
 rm -rf "$ISO_ROOT"
 mkdir -p "$ISO_ROOT/boot"
