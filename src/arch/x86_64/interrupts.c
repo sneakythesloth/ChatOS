@@ -131,7 +131,7 @@ static void gdt_initialize(void) {
         kernel_panic("The x86_64 task-state segment did not load.");
     }
 
-    serial_write("GDT/TSS: ring-0 segments loaded; IST1 reserved for double faults.\\r\\n");
+    serial_write("GDT/TSS: ring-0 segments loaded; IST1 reserved for double faults.\r\n");
 }
 
 static void idt_set_gate(uint8_t vector, uint64_t handler, uint8_t ist) {
@@ -168,7 +168,7 @@ void interrupts_initialize(void) {
     };
     __asm__ volatile ("lidt %0" : : "m"(descriptor) : "memory");
 
-    serial_write("IDT: 256 interrupt gates installed; CPU exception stubs online.\\r\\n");
+    serial_write("IDT: 256 interrupt gates installed; CPU exception stubs online.\r\n");
 }
 
 __attribute__((noreturn))
@@ -177,27 +177,27 @@ void interrupt_exception_dispatch(const struct exception_frame *frame) {
         kernel_panic("Exception dispatcher received a null frame.");
     }
 
-    serial_write("\\r\\n!!! CHATOS CPU EXCEPTION !!!\\r\\n");
+    serial_write("\r\n!!! CHATOS CPU EXCEPTION !!!\r\n");
     serial_write("Vector: ");
     serial_write_u64(frame->vector);
-    serial_write("\\r\\nReason: ");
+    serial_write("\r\nReason: ");
     if (frame->vector < 32) {
         serial_write(exception_names[frame->vector]);
     } else {
         serial_write("Unhandled interrupt");
     }
-    serial_write("\\r\\nError code: ");
+    serial_write("\r\nError code: ");
     serial_write_u64(frame->error_code);
-    serial_write("\\r\\nInstruction pointer: ");
+    serial_write("\r\nInstruction pointer: ");
     serial_write_u64(frame->instruction_pointer);
-    serial_write("\\r\\n");
+    serial_write("\r\n");
 
     if (frame->vector == 14) {
         uint64_t fault_address;
         __asm__ volatile ("mov %%cr2, %0" : "=r"(fault_address));
         serial_write("Page-fault address: ");
         serial_write_u64(fault_address);
-        serial_write("\\r\\n");
+        serial_write("\r\n");
     }
 
     kernel_panic("CPU exception is fatal; system halted.");
