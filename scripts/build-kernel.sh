@@ -39,6 +39,9 @@ CFLAGS=(
 if [[ "${CHATOS_EXCEPTION_SELF_TEST:-0}" == "1" ]]; then
     CFLAGS+=(-DCHATOS_EXCEPTION_SELF_TEST)
 fi
+if [[ "${CHATOS_TIMER_SELF_TEST:-0}" == "1" ]]; then
+    CFLAGS+=(-DCHATOS_TIMER_SELF_TEST)
+fi
 
 SOURCES=(
     src/kernel.c
@@ -49,6 +52,8 @@ SOURCES=(
     src/memory/vm.c
     src/arch/x86_64/serial.c
     src/arch/x86_64/interrupts.c
+    src/arch/x86_64/pic.c
+    src/arch/x86_64/timer.c
     src/panic.c
 )
 
