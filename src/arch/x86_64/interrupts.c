@@ -6,6 +6,10 @@
 
 #define IDT_ENTRY_COUNT 256U
 #define IDT_INTERRUPT_GATE 0x8EU
+#define IDT_KERNEL_CODE_SELECTOR 0x08U
+#define GDT_KERNEL_DATA_SELECTOR 0x10U
+#define GDT_TSS_SELECTOR 0x18U
+#define DOUBLE_FAULT_STACK_SIZE (16U * 1024U)
 
 struct idt_gate {
     uint16_t offset_low;
@@ -17,9 +21,27 @@ struct idt_gate {
     uint32_t reserved;
 } __attribute__((packed));
 
-struct idtr {
+struct descriptor_pointer {
     uint16_t limit;
     uint64_t base;
+} __attribute__((packed));
+
+struct tss64 {
+    uint32_t reserved0;
+    uint64_t rsp0;
+    uint64_t rsp1;
+    uint64_t rsp2;
+    uint64_t reserved1;
+    uint64_t ist1;
+    uint64_t ist2;
+    uint64_t ist3;
+    uint64_t ist4;
+    uint64_t ist5;
+    uint64_t ist6;
+    uint64_t ist7;
+    uint64_t reserved2;
+    uint16_t reserved3;
+    uint16_t iomap_base;
 } __attribute__((packed));
 
 struct exception_frame {
@@ -31,9 +53,13 @@ struct exception_frame {
 };
 
 static struct idt_gate idt[IDT_ENTRY_COUNT] __attribute__((aligned(16)));
+static uint64_t gdt[5] __attribute__((aligned(16)));
+static struct tss64 tss __attribute__((aligned(16)));
+static uint8_t double_fault_stack[DOUBLE_FAULT_STACK_SIZE] __attribute__((aligned(16)));
 
 extern void (*exception_stub_table[32])(void);
 extern void isr255(void);
+extern void gdt_load(const struct descriptor_pointer *descriptor);
 
 static const char *const exception_names[32] = {
     "Division Error",
@@ -70,11 +96,49 @@ static const char *const exception_names[32] = {
     "Reserved"
 };
 
-static void idt_set_gate(uint8_t vector, uint64_t handler, uint16_t code_segment) {
+static void gdt_initialize(void) {
+    const uint64_t tss_base = (uint64_t)&tss;
+    const uint32_t tss_limit = (uint32_t)(sizeof(tss) - 1U);
+
+    /* Ring-0 64-bit code and data descriptors. */
+    gdt[0] = 0;
+    gdt[1] = 0x00AF9A000000FFFFULL;
+    gdt[2] = 0x00CF92000000FFFFULL;
+
+    tss.ist1 = (uint64_t)&double_fault_stack[DOUBLE_FAULT_STACK_SIZE];
+    tss.iomap_base = (uint16_t)sizeof(tss);
+
+    /* 64-bit available TSS system descriptor occupies two GDT slots. */
+    gdt[3] = ((uint64_t)tss_limit & 0xFFFFULL)
+           | ((tss_base & 0xFFFFFFULL) << 16)
+           | (0x89ULL << 40)
+           | (((uint64_t)tss_limit & 0xF0000ULL) << 32)
+           | (((tss_base >> 24) & 0xFFULL) << 56);
+    gdt[4] = tss_base >> 32;
+
+    const struct descriptor_pointer descriptor = {
+        .limit = (uint16_t)(sizeof(gdt) - 1U),
+        .base = (uint64_t)&gdt[0]
+    };
+    gdt_load(&descriptor);
+
+    const uint16_t tss_selector = GDT_TSS_SELECTOR;
+    __asm__ volatile ("ltr %0" : : "r"(tss_selector) : "memory");
+
+    uint16_t active_tss;
+    __asm__ volatile ("str %0" : "=r"(active_tss));
+    if (active_tss != tss_selector) {
+        kernel_panic("The x86_64 task-state segment did not load.");
+    }
+
+    serial_write("GDT/TSS: ring-0 segments loaded; IST1 reserved for double faults.\\r\\n");
+}
+
+static void idt_set_gate(uint8_t vector, uint64_t handler, uint8_t ist) {
     struct idt_gate *gate = &idt[vector];
     gate->offset_low = (uint16_t)(handler & 0xFFFFU);
-    gate->selector = code_segment;
-    gate->ist = 0;
+    gate->selector = IDT_KERNEL_CODE_SELECTOR;
+    gate->ist = (uint8_t)(ist & 0x07U);
     gate->attributes = IDT_INTERRUPT_GATE;
     gate->offset_middle = (uint16_t)((handler >> 16) & 0xFFFFU);
     gate->offset_high = (uint32_t)((handler >> 32) & 0xFFFFFFFFU);
@@ -82,28 +146,29 @@ static void idt_set_gate(uint8_t vector, uint64_t handler, uint16_t code_segment
 }
 
 void interrupts_initialize(void) {
-    uint16_t code_segment;
-    __asm__ volatile ("mov %%cs, %0" : "=r"(code_segment));
+    gdt_initialize();
 
     /*
      * Leave a valid fatal fallback in every vector slot. CPU exceptions get
      * their own stubs so hardware-pushed error codes are decoded correctly.
+     * Double fault (#DF) uses IST1, independent of the current stack.
      */
     for (uint16_t vector = 0; vector < IDT_ENTRY_COUNT; ++vector) {
-        idt_set_gate((uint8_t)vector, (uint64_t)isr255, code_segment);
+        idt_set_gate((uint8_t)vector, (uint64_t)isr255, 0);
     }
 
     for (uint8_t vector = 0; vector < 32; ++vector) {
-        idt_set_gate(vector, (uint64_t)exception_stub_table[vector], code_segment);
+        idt_set_gate(vector, (uint64_t)exception_stub_table[vector],
+                     vector == 8 ? 1U : 0U);
     }
 
-    const struct idtr descriptor = {
+    const struct descriptor_pointer descriptor = {
         .limit = (uint16_t)(sizeof(idt) - 1U),
         .base = (uint64_t)&idt[0]
     };
     __asm__ volatile ("lidt %0" : : "m"(descriptor) : "memory");
 
-    serial_write("IDT: 256 interrupt gates installed; CPU exception stubs online.\r\n");
+    serial_write("IDT: 256 interrupt gates installed; CPU exception stubs online.\\r\\n");
 }
 
 __attribute__((noreturn))
@@ -112,20 +177,28 @@ void interrupt_exception_dispatch(const struct exception_frame *frame) {
         kernel_panic("Exception dispatcher received a null frame.");
     }
 
-    serial_write("\r\n!!! CHATOS CPU EXCEPTION !!!\r\n");
+    serial_write("\\r\\n!!! CHATOS CPU EXCEPTION !!!\\r\\n");
     serial_write("Vector: ");
     serial_write_u64(frame->vector);
-    serial_write("\r\nReason: ");
+    serial_write("\\r\\nReason: ");
     if (frame->vector < 32) {
         serial_write(exception_names[frame->vector]);
     } else {
         serial_write("Unhandled interrupt");
     }
-    serial_write("\r\nError code: ");
+    serial_write("\\r\\nError code: ");
     serial_write_u64(frame->error_code);
-    serial_write("\r\nInstruction pointer: ");
+    serial_write("\\r\\nInstruction pointer: ");
     serial_write_u64(frame->instruction_pointer);
-    serial_write("\r\n");
+    serial_write("\\r\\n");
+
+    if (frame->vector == 14) {
+        uint64_t fault_address;
+        __asm__ volatile ("mov %%cr2, %0" : "=r"(fault_address));
+        serial_write("Page-fault address: ");
+        serial_write_u64(fault_address);
+        serial_write("\\r\\n");
+    }
 
     kernel_panic("CPU exception is fatal; system halted.");
 }
