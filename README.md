@@ -6,7 +6,7 @@ ChatOS is not a Linux distribution, desktop theme, or macOS application. It is i
 
 The product target is a polished, approachable experience for people accustomed to macOS, combined with an Omarchy-inspired keyboard-driven workflow: tiling, workspaces, terminal-first tools, and a cohesive visual system. Omarchy is inspiration only; ChatOS will not copy it or depend on its Linux base.
 
-> **Status:** Early kernel development, not yet a usable desktop operating system. The current kernel has a freestanding C11 x86_64 entry point, Limine boot requests, physical-frame allocation, HHDM helpers, and early page-table primitives. The QEMU boot smoke test is being added; until it passes, successful compilation is not evidence of a successful boot.
+> **Status:** Early kernel development, not yet a usable desktop operating system. The Limine BIOS image boots in QEMU and CI confirms the kernel bootstrap, memory-map accounting, GDT/TSS/IDT installation, and a deliberate `INT3` exception/panic path. The kernel has not yet reached userspace, graphics, storage, networking, or desktop functionality. UEFI boot and runtime HHDM/page-table operations remain unverified.
 
 ## Screenshots
 
@@ -49,7 +49,7 @@ ARM64 is a later architecture effort. Apple Silicon support is a long-term inves
 
 - `src/kernel.c`: kernel entry point.
 - `src/boot/`: Limine request structures and declarations.
-- `src/arch/x86_64/`: x86_64 CPU and serial primitives.
+- `src/arch/x86_64/`: x86_64 CPU, serial, GDT/TSS, IDT, and exception-entry primitives.
 - `src/memory/`: memory map handling, physical frame allocator, HHDM helpers, and early page-table primitives.
 - `docs/PRODUCT_EDITIONS.md`: Window and Native edition architecture and safety requirements.
 - `docs/RELEASES.md`: separate host-app and full-OS release channels and acceptance gates.
@@ -88,23 +88,25 @@ Set `OVMF_CODE` to an OVMF firmware image to test the UEFI path.
 
 ## Current kernel capabilities
 
-- Freestanding C11 x86_64 entry point and Limine base revision 3 boot requests.
+- Freestanding C11 x86_64 entry point and Limine base revision 3 boot requests; Limine BIOS boot verified in QEMU CI.
 - Validated Limine memory-map response and usable-memory accounting.
 - Fixed-capacity bitmap physical-frame allocator for the first 64 GiB, with host-side allocation tests.
 - Limine HHDM discovery and basic physical/virtual conversion helpers.
 - Early x86_64 active-page-table discovery and 4 KiB map/unmap/translate primitives.
 - COM1 serial diagnostics and a fatal panic path.
-- GitHub Actions builds the freestanding kernel and runs allocator tests; a QEMU boot smoke-test job is included to establish actual boot evidence.
+- Ring-0 GDT and 64-bit TSS setup, including a dedicated IST1 double-fault stack.
+- 256-entry IDT with CPU exception stubs, error-code frame normalization, page-fault CR2 diagnostics, and fatal fallback handlers.
+- QEMU CI boot test and an `INT3` exception self-test; host-side physical allocator tests and ELF load-layout validation.
 
-Compilation and host allocator tests do not prove physical-hardware operation. HHDM and page-table code still require runtime validation beyond the initial boot marker. The memory subsystem is early bootstrap code, not a complete virtual-memory manager. It has no address-space isolation, page-table reclamation, general page ownership, guard-page policy, or SMP/TLB-shootdown support. User mappings are intentionally rejected until privilege-separated address spaces are implemented. The physical-frame bitmap is static and allocation is single-CPU only.
+Compilation and host allocator tests do not prove physical-hardware operation. HHDM and page-table code still require dedicated runtime validation; only successful kernel bootstrap and memory-map accounting have been verified under QEMU. The memory subsystem is early bootstrap code, not a complete virtual-memory manager. It has no address-space isolation, page-table reclamation, general page ownership, guard-page policy, or SMP/TLB-shootdown support. User mappings are intentionally rejected until privilege-separated address spaces are implemented. The physical-frame bitmap is static and allocation is single-CPU only.
 
-There is no scheduler, IDT/exception handling, filesystem, user process, graphics stack, desktop, networking, or Linux compatibility layer yet. Do not treat planned capabilities as implemented.
+There is no scheduler, non-fatal IRQ/timer path, filesystem, user process, graphics stack, desktop, networking, or Linux compatibility layer yet. Do not treat planned capabilities as implemented.
 
 ## Roadmap
 
-1. M0 — Kernel bootstrap: C entry, Limine, serial output, linker and build foundation; prove boot.
+1. M0 — Kernel bootstrap: C entry, Limine BIOS, serial output, linker and build foundation; QEMU boot verified, UEFI remains to be tested.
 2. M1 — Boot information and physical memory: validate Limine responses, parse memory map, allocate/free physical frames.
-3. M2 — CPU and interrupts: GDT, TSS, IDT, exceptions, interrupt controllers, timers.
+3. M2 — CPU and interrupts: GDT/TSS/IDT and fatal exceptions implemented; PIC/APIC, IRQ dispatch, timer and SMP remain.
 4. M3 — Drivers: PCI, storage, keyboard, pointer, framebuffer/graphics.
 5. M4 — Processes: privilege separation, scheduler, syscalls, ELF loader, IPC.
 6. M5 — Userspace: VFS, init, service manager, shell, terminal, package management.
