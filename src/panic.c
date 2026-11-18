@@ -1,5 +1,6 @@
 #include "serial.h"
 #include "cpu.h"
+#include "panic.h"
 
 __attribute__((noreturn))
 void kernel_panic(const char *reason) {
