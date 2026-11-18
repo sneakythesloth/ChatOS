@@ -16,9 +16,11 @@ void _start(void) {
     serial_write("Language     : freestanding C11\r\n");
     serial_write("\r\n");
 
-    serial_write("Milestone 1: validating boot information...\r\n");
+    serial_write("M1: validating boot information and memory...\r\n");
     memory_initialize();
-    serial_write("Physical frame allocator: online (64 GiB address window).\r\n");
+    serial_write("Physical frames: online.\r\n");
+    serial_write("HHDM: online.\r\n");
+    serial_write("Virtual memory: current page tables discovered.\r\n");
     serial_write("Kernel bootstrap complete. CPU halted pending M2.\r\n");
 
     for (;;) {
