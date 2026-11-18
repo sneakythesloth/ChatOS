@@ -1,30 +1,32 @@
 # ChatOS Development Roadmap
 
-Milestones require a successful build and a repeatable test or boot demonstration. Files existing in the repository do not by themselves complete a milestone.
+A milestone is complete only when its acceptance tests have evidence. Committing source files alone does not complete a milestone.
 
-## M0 — C kernel bootstrap (scaffold committed; verification pending)
-- [x] Freestanding C11 kernel entry point and Limine request markers.
-- [x] x86_64 interrupt-disable and halt primitives.
-- [x] COM1 serial console and panic routine.
-- [x] Linker script, Limine configuration, and build/ISO/QEMU scripts.
-- [ ] Build with Clang/LLD and verify the ELF.
-- [ ] Boot under QEMU and save the serial log.
-- [ ] Verify UEFI path with OVMF.
+## M0 — C kernel bootstrap (implementation scaffold; boot proof pending)
+- [x] Freestanding C11 entry point and x86_64 CPU primitives.
+- [x] COM1 serial output and panic path.
+- [x] Limine boot configuration and linker layout.
+- [ ] Build and boot the kernel under QEMU.
+- [ ] Verify BIOS and UEFI boot paths.
 
-## M1 — Boot information and memory
-- [ ] Add ABI-correct Limine response structures.
-- [ ] Validate bootloader base revision and memory-map response.
-- [ ] Parse memory regions and reserve kernel/bootloader-owned ranges.
-- [ ] Implement a physical frame allocator.
-- [ ] Add page-table inspection and kernel virtual-memory management.
-- [ ] Add guarded kernel heap allocation.
+## M1 — Boot information and physical memory (implementation scaffold; verification pending)
+- [x] Define Limine base revision 3 and memory-map request structures.
+- [x] Validate bootloader base revision and memory-map response.
+- [x] Validate memory-map entry pointers, lengths, and overflow.
+- [x] Parse usable-memory totals.
+- [x] Implement fixed 64 GiB bitmap-based 4 KiB physical frame allocator.
+- [x] Add single-frame allocate/free API.
+- [ ] Add unit tests for allocator edge cases.
+- [ ] Boot under QEMU and verify reported memory.
+- [ ] Verify allocation/free using actual boot memory map.
+- [ ] Add HHDM helpers and page-table management in a subsequent memory substage.
 
 ## M2 — CPU and interrupts
 - [ ] GDT and TSS setup.
 - [ ] IDT and exception diagnostics.
 - [ ] APIC interrupt-controller support.
 - [ ] Timer and monotonic clock.
-- [ ] SMP discovery and safe per-CPU state.
+- [ ] SMP discovery and per-CPU state.
 
 ## M3 — Devices
 - [ ] PCI enumeration.
@@ -38,13 +40,13 @@ Milestones require a successful build and a repeatable test or boot demonstratio
 - [ ] Scheduler and context switching.
 - [ ] ELF userspace loader.
 - [ ] System-call ABI.
-- [ ] IPC, process lifecycle, and signals/events.
+- [ ] IPC and process lifecycle.
 
 ## M5 — Userspace and storage
 - [ ] VFS and initial writable filesystem.
 - [ ] Init and service manager.
 - [ ] Shell, terminal, and basic utilities.
-- [ ] App package format, install/update/uninstall.
+- [ ] App package format and package manager.
 - [ ] User and permission model.
 
 ## M6 — Desktop
@@ -52,12 +54,12 @@ Milestones require a successful build and a repeatable test or boot demonstratio
 - [ ] Tiling window manager and keyboard navigation.
 - [ ] Workspaces, launcher, status bar, and notifications.
 - [ ] Design system, typography, motion, and settings.
-- [ ] First-party applications and terminal.
+- [ ] First-party applications.
 
 ## M7 — AI computer use
 - [ ] Secure ChatGPT integration.
 - [ ] Capability-based tool permissions.
-- [ ] Distinct second cursor rendered by the compositor.
+- [ ] Distinct second cursor rendered by compositor.
 - [ ] Visual targeting and controlled input actions.
 - [ ] Narration, action history, pause/stop, and user takeover.
 - [ ] NO AI, FULL AI, and HYBRID mode enforcement.
@@ -66,9 +68,9 @@ Milestones require a successful build and a repeatable test or boot demonstratio
 - [ ] Broader x86_64 hardware and firmware support.
 - [ ] ARM64 architecture port.
 - [ ] Linux ELF and syscall ABI compatibility.
-- [ ] Linux application installation and dependency handling.
+- [ ] Linux application packaging and dependency handling.
 - [ ] Investigate Apple Silicon platform support.
 
 ## Release gates
 
-Every major subsystem should include build instructions, compiler/toolchain versions, tests where possible, QEMU or hardware reproduction steps, serial/debug logs for boot-critical changes, and architecture notes for non-obvious decisions.
+Every major subsystem needs build instructions, toolchain details, tests where possible, QEMU or hardware reproduction steps, boot/debug logs, and notes for non-obvious architecture decisions.
