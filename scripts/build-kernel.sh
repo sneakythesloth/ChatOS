@@ -42,6 +42,9 @@ fi
 if [[ "${CHATOS_TIMER_SELF_TEST:-0}" == "1" ]]; then
     CFLAGS+=(-DCHATOS_TIMER_SELF_TEST)
 fi
+if [[ "${CHATOS_MEMORY_SELF_TEST:-0}" == "1" ]]; then
+    CFLAGS+=(-DCHATOS_MEMORY_SELF_TEST)
+fi
 
 SOURCES=(
     src/kernel.c
@@ -50,6 +53,7 @@ SOURCES=(
     src/memory/frame_allocator.c
     src/memory/hhdm.c
     src/memory/vm.c
+    src/memory/runtime_self_test.c
     src/arch/x86_64/serial.c
     src/arch/x86_64/interrupts.c
     src/arch/x86_64/pic.c
