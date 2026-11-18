@@ -44,6 +44,7 @@ SOURCES=(
     src/memory/hhdm.c
     src/memory/vm.c
     src/arch/x86_64/serial.c
+    src/arch/x86_64/interrupts.c
     src/panic.c
 )
 
@@ -53,6 +54,10 @@ for source in "${SOURCES[@]}"; do
     "$CC" "${CFLAGS[@]}" -c "$source" -o "$object"
     OBJECTS+=("$object")
 done
+
+ASM_OBJECT="$OBJECT_DIR/src_arch_x86_64_interrupts.o"
+"$CC" --target=x86_64-unknown-none-elf -m64 -c src/arch/x86_64/interrupts.S -o "$ASM_OBJECT"
+OBJECTS+=("$ASM_OBJECT")
 
 "$LD" -nostdlib -static -z max-page-size=0x1000 \
     -T linker.ld \
