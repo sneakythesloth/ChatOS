@@ -48,3 +48,22 @@ void serial_write(const char *text) {
         serial_write_char(*text++);
     }
 }
+
+void serial_write_u64(uint64_t value) {
+    char digits[20];
+    uint32_t count = 0;
+
+    if (value == 0) {
+        serial_write_char('0');
+        return;
+    }
+
+    while (value != 0 && count < sizeof(digits)) {
+        digits[count++] = (char)('0' + (value % 10));
+        value /= 10;
+    }
+
+    while (count != 0) {
+        serial_write_char(digits[--count]);
+    }
+}
