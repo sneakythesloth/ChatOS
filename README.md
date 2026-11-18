@@ -52,6 +52,7 @@ ARM64 is a later architecture effort. Apple Silicon support is a long-term inves
 - `src/arch/x86_64/`: x86_64 CPU and serial primitives.
 - `src/memory/`: memory map handling, physical frame allocator, HHDM helpers, and early page-table primitives.
 - `docs/PRODUCT_EDITIONS.md`: Window and Native edition architecture and safety requirements.
+- `docs/RELEASES.md`: separate host-app and full-OS release channels and acceptance gates.
 - `src/include/`: shared kernel headers.
 - `src/panic.c`: fatal kernel diagnostics.
 - `linker.ld`: kernel ELF layout.
