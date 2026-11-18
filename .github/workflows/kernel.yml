@@ -36,16 +36,18 @@ jobs:
         run: bash scripts/test-qemu-boot.sh
       - name: Boot ChatOS through UEFI in QEMU
         run: |
-          if [[ -f /usr/share/OVMF/OVMF_CODE.fd ]]; then
-            OVMF_CODE=/usr/share/OVMF/OVMF_CODE.fd
-          elif [[ -f /usr/share/OVMF/OVMF_CODE_4M.fd ]]; then
+          if [[ -f /usr/share/OVMF/OVMF_CODE_4M.fd && -f /usr/share/OVMF/OVMF_VARS_4M.fd ]]; then
             OVMF_CODE=/usr/share/OVMF/OVMF_CODE_4M.fd
+            OVMF_VARS=/usr/share/OVMF/OVMF_VARS_4M.fd
+          elif [[ -f /usr/share/OVMF/OVMF_CODE.fd && -f /usr/share/OVMF/OVMF_VARS.fd ]]; then
+            OVMF_CODE=/usr/share/OVMF/OVMF_CODE.fd
+            OVMF_VARS=/usr/share/OVMF/OVMF_VARS.fd
           else
-            echo "No OVMF_CODE firmware image found." >&2
-            find /usr/share -iname 'OVMF_CODE*.fd' -print
+            echo "Could not find a matching OVMF code/variables firmware pair." >&2
+            find /usr/share \( -iname 'OVMF_*CODE*.fd' -o -iname 'OVMF_*VARS*.fd' \) -print
             exit 1
           fi
-          export OVMF_CODE
+          export OVMF_CODE OVMF_VARS
           bash scripts/test-qemu-boot.sh
       - name: Test CPU exception handling in QEMU
         env:
