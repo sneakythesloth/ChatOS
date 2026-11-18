@@ -2,15 +2,16 @@
 
 A milestone is complete only when its acceptance tests have evidence. Committing source files alone does not complete a milestone.
 
-## M0 — C kernel bootstrap (implementation scaffold; boot proof pending)
+## M0 — C kernel bootstrap (QEMU BIOS boot verified)
 - [x] Freestanding C11 entry point and x86_64 CPU primitives.
 - [x] COM1 serial output and panic path.
 - [x] Limine boot configuration and linker layout.
 - [x] Freestanding kernel compile/link in GitHub Actions.
-- [ ] Boot the kernel under QEMU.
-- [ ] Verify BIOS and UEFI boot paths.
+- [x] Boot the kernel under QEMU using the Limine BIOS path; serial bootstrap marker observed in CI.
+- [x] Verify Limine BIOS boot under QEMU.
+- [ ] Verify UEFI boot under OVMF.
 
-## M1 — Boot information and physical memory (build and host tests pass; runtime verification pending)
+## M1 — Boot information and physical memory (initial QEMU runtime boot verified)
 - [x] Define Limine base revision 3 and memory-map request structures.
 - [x] Validate bootloader base revision and memory-map response.
 - [x] Validate memory-map entry pointers, lengths, and overflow.
@@ -19,9 +20,9 @@ A milestone is complete only when its acceptance tests have evidence. Committing
 - [x] Add single-frame allocate/free API.
 - [x] Add host-side tests for allocation order, exhaustion, reserved ranges, and invalid/double frees.
 - [x] GitHub Actions kernel build and allocator test job pass.
-- [ ] Boot under QEMU and verify reported memory.
-- [ ] Verify allocation/free using actual boot memory map.
-- [x] Add Limine HHDM discovery and physical/virtual conversion helpers (compile/CI verified; QEMU runtime test pending).
+- [x] Boot under QEMU and verify memory-map response and usable-memory totals (18 entries, 508 MiB in the CI guest).
+- [ ] Exercise frame allocate/free against the actual boot memory map in QEMU.
+- [x] Add Limine HHDM discovery and physical/virtual conversion helpers (compile/CI verified; runtime validation pending).
 - [x] Add initial x86_64 page-table discovery and 4 KiB map/unmap/translate primitives (compile/CI verified; QEMU runtime test pending).
 - [ ] Add VM host-side tests with a page-table model or suitable harness.
 - [ ] Add QEMU runtime validation of HHDM and page-table operations.
@@ -33,11 +34,15 @@ A milestone is complete only when its acceptance tests have evidence. Committing
 - [ ] ChatOS Native: bootable installer for validated x86_64 hardware, safe install/rollback guidance, and explicit destructive-install confirmation.
 - [ ] Keep both editions on the same kernel/userspace source tree with distinct packaging and boot targets.
 
-## M2 — CPU and interrupts
-- [ ] GDT and TSS setup.
-- [ ] IDT and exception diagnostics.
+## M2 — CPU and interrupts (GDT/TSS/IDT and fatal exception path QEMU verified)
+- [x] Load ring-0 GDT code/data descriptors and a 64-bit TSS.
+- [x] Install a 256-entry IDT with CPU exception stubs and fatal serial diagnostics.
+- [x] Reserve TSS IST1 as the double-fault stack and assign it to vector 8.
+- [x] Exercise the breakpoint exception (INT3) in QEMU and verify vector/reason/panic diagnostics.
+- [ ] Deliberately exercise the double-fault IST path under QEMU.
+- [ ] Remap/mask the legacy PIC and add safe IRQ dispatch.
+- [ ] Add PIT or HPET timer and a monotonic clock; verify timer ticks in QEMU.
 - [ ] APIC interrupt-controller support.
-- [ ] Timer and monotonic clock.
 - [ ] SMP discovery and per-CPU state.
 
 ## M3 — Devices
