@@ -3,6 +3,7 @@
 #include "serial.h"
 #include "cpu.h"
 #include "memory.h"
+#include "interrupts.h"
 
 __attribute__((noreturn, section(".text.entry")))
 void _start(void) {
@@ -21,7 +22,9 @@ void _start(void) {
     serial_write("Physical frames: online.\r\n");
     serial_write("HHDM: online.\r\n");
     serial_write("Virtual memory: current page tables discovered.\r\n");
-    serial_write("Kernel bootstrap complete. CPU halted pending M2.\r\n");
+    interrupts_initialize();
+    serial_write("M2: IDT installed; CPU exceptions have fatal diagnostic handlers.\\r\\n");
+    serial_write("Kernel bootstrap complete. CPU halted with interrupts disabled.\\r\\n");
 
     for (;;) {
         cpu_halt();
