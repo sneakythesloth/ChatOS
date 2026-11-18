@@ -35,18 +35,28 @@ ChatOS has two intended distribution editions sharing the same kernel and usersp
 
 Both editions use the same ChatOS kernel, services, and desktop. The Window edition adds a host-side VM launcher and virtual devices; Native uses firmware boot and physical device drivers. See [Edition architecture](docs/EDITIONS.md).
 
+## Product editions
+
+ChatOS has two planned editions built from the same independent kernel and userspace:
+
+- **ChatOS Window:** a macOS-hosted application that opens ChatOS in a separate, resizable virtual-machine window. The first implementation target is QEMU; a native macOS virtualization backend can be evaluated later. It must use an isolated virtual disk by default and must not alter the Mac's bootloader or partitions.
+- **ChatOS Native:** a bootable installer and bare-metal system for explicitly supported hardware. It can replace the existing operating system only after a clear, destructive-install warning and explicit confirmation. Hardware support is validated per device.
+
+These are product targets, not currently shippable editions. The repository currently contains an early x86_64 kernel, not a finished desktop or macOS VM application.
+
 ## Platform direction
 
-The first target is x86_64 PCs and virtual machines. QEMU is the intended initial test environment. Limine is the boot protocol/bootloader interface; it is not the ChatOS kernel.
+The first kernel target is x86_64 PCs and virtual machines. QEMU is the intended initial test environment. Limine is the boot protocol/bootloader interface; it is not the ChatOS kernel.
 
-ARM64 is a later architecture effort. Apple Silicon support is a long-term goal requiring platform-specific boot, firmware, and driver work; it is not currently supported.
+ARM64 is a later architecture effort. Apple Silicon support is a long-term investigation requiring platform-specific boot, firmware, and driver work; it is not currently supported. ChatOS Native must not be advertised as replacing macOS on Apple Silicon until that hardware path is implemented and tested.
 
 ## Repository layout
 
 - src/kernel.c: kernel entry point.
 - src/boot/: Limine request structures and declarations.
 - src/arch/x86_64/: x86_64 CPU and serial primitives.
-- src/memory/: memory map handling and physical frame allocator.
+- src/memory/: memory map handling, physical frame allocator, HHDM helpers, and early page-table primitives.
+- docs/PRODUCT_EDITIONS.md: Window and Native edition architecture and safety requirements.
 - src/include/: shared kernel headers.
 - src/panic.c: fatal kernel diagnostics.
 - linker.ld: kernel ELF layout.
@@ -76,6 +86,8 @@ Set OVMF_CODE to an OVMF firmware image to test the UEFI path.
 - Limine base revision 3 request and memory-map response.
 - Validation of memory-map response and entries.
 - A fixed-capacity bitmap physical frame allocator for the first 64 GiB of physical address space.
+- Limine HHDM physical/virtual address helpers.
+- Early x86_64 page-table discovery, 4 KiB mapping, unmapping, and translation helpers (not yet runtime-boot verified).
 - COM1 serial diagnostics and a fatal panic path.
 - Host-side allocator tests run by GitHub Actions.
 - Limine HHDM offset discovery and physical/virtual conversion helpers.
