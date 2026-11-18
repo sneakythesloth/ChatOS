@@ -92,3 +92,66 @@ exception_stub_table:
 .size exception_stub_table, .-exception_stub_table
 
 .section .note.GNU-stack,"",@progbits
+
+/*
+ * IRQ0 (PIT channel 0) interrupt entry. Unlike fatal exception stubs,
+ * this path preserves every general-purpose register and returns with iretq.
+ */
+.text
+.code64
+
+.extern interrupt_irq_dispatch
+
+.global irq0_stub
+.type irq0_stub, @function
+irq0_stub:
+    pushq $0
+    pushq $32
+    jmp irq_common
+
+.type irq_common, @function
+irq_common:
+    cld
+    pushq %rax
+    pushq %rbx
+    pushq %rcx
+    pushq %rdx
+    pushq %rbp
+    pushq %rsi
+    pushq %rdi
+    pushq %r8
+    pushq %r9
+    pushq %r10
+    pushq %r11
+    pushq %r12
+    pushq %r13
+    pushq %r14
+    pushq %r15
+
+    /* Preserve the complete saved-register frame across the C call. */
+    movq %rsp, %r12
+    leaq 120(%rsp), %rdi
+    andq $-16, %rsp
+    call interrupt_irq_dispatch
+    movq %r12, %rsp
+
+    popq %r15
+    popq %r14
+    popq %r13
+    popq %r12
+    popq %r11
+    popq %r10
+    popq %r9
+    popq %r8
+    popq %rdi
+    popq %rsi
+    popq %rbp
+    popq %rdx
+    popq %rcx
+    popq %rbx
+    popq %rax
+
+    addq $16, %rsp
+    iretq
+
+.section .note.GNU-stack,"",@progbits
