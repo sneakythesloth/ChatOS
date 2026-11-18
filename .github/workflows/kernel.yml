@@ -51,6 +51,14 @@ jobs:
         run: |
           bash scripts/build-iso.sh
           bash scripts/test-qemu-boot.sh
+      - name: Test HHDM and virtual memory operations in QEMU
+        env:
+          LIMINE_DIR: ${{ github.workspace }}/limine
+          CHATOS_MEMORY_SELF_TEST: "1"
+          EXPECTED_SERIAL_MARKER: "Memory runtime test: HHDM alias, map/translate/unmap and frame free passed."
+        run: |
+          bash scripts/build-iso.sh
+          bash scripts/test-qemu-boot.sh
       - name: Upload serial boot log
         if: always()
         uses: actions/upload-artifact@v4
