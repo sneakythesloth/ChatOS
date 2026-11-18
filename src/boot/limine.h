@@ -31,7 +31,19 @@ struct limine_memmap_request {
     struct limine_memmap_response *response;
 };
 
+struct limine_hhdm_response {
+    uint64_t revision;
+    uint64_t offset;
+};
+
+struct limine_hhdm_request {
+    uint64_t id[4];
+    uint64_t revision;
+    struct limine_hhdm_response *response;
+};
+
 extern volatile uint64_t limine_base_revision[3];
 extern volatile struct limine_memmap_request limine_memmap_request;
+extern volatile struct limine_hhdm_request limine_hhdm_request;
 
 #endif
