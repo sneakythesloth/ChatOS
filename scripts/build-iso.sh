@@ -15,7 +15,7 @@ for tool in clang ld.lld xorriso; do
     }
 done
 
-for file in "$LIMINE_DIR/limine-bios-cd.bin" "$LIMINE_DIR/limine-uefi-cd.bin" "$LIMINE_DIR/limine"; do
+for file in "$LIMINE_DIR/limine-bios-cd.bin" "$LIMINE_DIR/limine-uefi-cd.bin" "$LIMINE_DIR/limine-bios.sys" "$LIMINE_DIR/limine"; do
     test -f "$file" || {
         echo "Missing Limine file: $file" >&2
         echo "Set LIMINE_DIR to the directory containing the Limine binaries and utility." >&2
@@ -30,6 +30,7 @@ mkdir -p "$ISO_ROOT/boot"
 cp "$KERNEL" "$ISO_ROOT/boot/chatos.elf"
 cp limine.conf "$ISO_ROOT/limine.conf"
 cp "$LIMINE_DIR/limine-bios-cd.bin" "$ISO_ROOT/"
+cp "$LIMINE_DIR/limine-bios.sys" "$ISO_ROOT/"
 cp "$LIMINE_DIR/limine-uefi-cd.bin" "$ISO_ROOT/"
 
 xorriso -as mkisofs \
