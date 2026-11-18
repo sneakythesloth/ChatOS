@@ -27,8 +27,9 @@ This is not a functioning general-purpose OS. Memory management, exception/inter
 
 ## Acceptance criteria
 
-- [ ] Clang compiles all C sources for x86_64-unknown-none-elf.
-- [ ] LLD links the freestanding kernel ELF without unresolved runtime symbols.
+- [x] Freestanding C sources compile for x86_64-unknown-none-elf with Clang 17.
+- [x] LLD 17 links a static x86_64 ELF with the configured higher-half entry point and no unresolved symbols.
+- [ ] Run the committed build script end-to-end in CI.
 - [ ] ISO is generated with Limine BIOS and UEFI boot files.
 - [ ] QEMU reaches the ChatOS kernel entry point.
 - [ ] Serial output contains the kernel startup report.
@@ -37,4 +38,4 @@ This is not a functioning general-purpose OS. Memory management, exception/inter
 
 ## Verification record
 
-The source and build configuration have been committed. No successful compile or QEMU execution is claimed until CI or a local environment completes those checks. Keep this milestone open until the acceptance criteria have evidence.
+The freestanding C compilation and LLD link sequence was reproduced successfully in a local check using Clang 17 and LLD 17; the resulting file was a static x86_64 ELF with entry point 0xffffffff80000000 and no undefined symbols. The exact GitHub Actions run has not been inspected. QEMU and xorriso are not installed in the available local environment, so ISO creation and BIOS/UEFI boot remain unverified. Keep this milestone open.
