@@ -9,7 +9,6 @@
 #define IDT_ENTRY_COUNT 256U
 #define IDT_INTERRUPT_GATE 0x8EU
 #define IDT_KERNEL_CODE_SELECTOR 0x08U
-#define GDT_KERNEL_DATA_SELECTOR 0x10U
 #define GDT_TSS_SELECTOR 0x18U
 #define DOUBLE_FAULT_STACK_SIZE (16U * 1024U)
 
@@ -164,6 +163,9 @@ void interrupts_initialize(void) {
         idt_set_gate(vector, (uint64_t)exception_stub_table[vector],
                      vector == 8 ? 1U : 0U);
     }
+
+    /* Legacy PIC IRQ0 is remapped to vector 32. */
+    idt_set_gate(32U, (uint64_t)irq0_stub, 0U);
 
     const struct descriptor_pointer descriptor = {
         .limit = (uint16_t)(sizeof(idt) - 1U),
