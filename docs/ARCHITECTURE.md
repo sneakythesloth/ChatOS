@@ -4,7 +4,7 @@
 
 ChatOS is an independent operating system. Its kernel, userspace, system services, and desktop are ChatOS components. Linux is not the host kernel or base distribution.
 
-Initial target: x86_64, freestanding C11, Clang/LLD, and Limine boot protocol. QEMU is the planned first emulator target.
+Initial target: x86_64, freestanding C11, Clang/LLD, and Limine boot protocol. The Limine BIOS path boots in QEMU and is exercised in GitHub Actions; UEFI/OVMF remains unverified.
 
 ## Layers
 
@@ -31,12 +31,16 @@ Limine HHDM discovery provides a direct-map offset and basic physical/virtual co
 
 The allocator is single-CPU bootstrap code. Do not enable concurrent allocation until synchronization is implemented.
 
+## CPU tables and exception handling
+
+The kernel loads a private ring-0 GDT with 64-bit code/data descriptors and an available 64-bit TSS. The TSS is loaded with `ltr`; the active selector is read back and checked. A 16 KiB, 16-byte-aligned stack is assigned to TSS IST1 and IDT vector 8 (double fault). The 256-entry IDT provides dedicated assembly stubs for vectors 0–31 and a fatal fallback for other vectors. Stubs normalize error-code/no-error-code exception frames before dispatch. Fatal diagnostics include vector, reason, error code, and instruction pointer; page faults additionally report CR2. A compile-time `INT3` self-test verifies the breakpoint path and panic halt in QEMU. This does not yet verify a genuine double fault or non-fatal hardware IRQ delivery. IF remains disabled at the end of bootstrap; the PIC/APIC and timer path are not yet implemented.
+
 ## C kernel rules
 
 - Compile freestanding; do not depend on hosted libc or a C runtime.
 - Keep stack protection, PIC/PIE, and the red zone disabled until explicitly supported.
 - Keep architecture-specific inline assembly behind narrow interfaces.
-- Do not enable interrupts before exception handlers and interrupt controllers are ready.
+- Do not enable interrupts before exception handlers, an interrupt controller, and handlers/EOI paths for every unmasked IRQ are ready.
 - Do not enable heap allocation before physical and virtual memory management exist.
 - Keep kernel/userspace privilege boundaries explicit.
 - Treat external input, including AI-generated actions, as untrusted.
