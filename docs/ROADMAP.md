@@ -27,6 +27,12 @@ A milestone is complete only when its acceptance tests have evidence. Committing
 - [ ] Add QEMU runtime validation of HHDM and page-table operations.
 - [ ] Add address-space ownership, safe reclamation, and SMP/TLB synchronization.
 
+## Product delivery tracks (parallel to kernel milestones)
+
+- [ ] ChatOS Window: macOS launcher/application shell, QEMU VM lifecycle, resizable display, isolated virtual disk, and explicit host-sharing permissions.
+- [ ] ChatOS Native: bootable installer for validated x86_64 hardware, safe install/rollback guidance, and explicit destructive-install confirmation.
+- [ ] Keep both editions on the same kernel/userspace source tree with distinct packaging and boot targets.
+
 ## M2 — CPU and interrupts
 - [ ] GDT and TSS setup.
 - [ ] IDT and exception diagnostics.
