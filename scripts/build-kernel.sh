@@ -36,6 +36,10 @@ CFLAGS=(
     -Isrc/arch/x86_64
 )
 
+if [[ "${CHATOS_EXCEPTION_SELF_TEST:-0}" == "1" ]]; then
+    CFLAGS+=(-DCHATOS_EXCEPTION_SELF_TEST)
+fi
+
 SOURCES=(
     src/kernel.c
     src/boot/limine.c
