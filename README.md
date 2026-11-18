@@ -26,6 +26,15 @@ The product target is a polished, approachable experience for people accustomed 
 
 The AI pointer must be visually distinct from the user pointer. Users must be able to observe, pause, stop, and take over. Consequential actions require confirmation.
 
+## Editions
+
+ChatOS has two intended distribution editions sharing the same kernel and userspace:
+
+- **ChatOS Window:** a resizable macOS-hosted virtual-machine window. The host app will launch a ChatOS VM (QEMU is the initial development path); its virtual disk is isolated from the Mac by default. It must never alter the host bootloader or partitions. This is a planned product, not yet packaged or runnable.
+- **ChatOS Native:** a bootable installer for explicitly supported x86_64 PCs. It installs ChatOS directly to hardware and can replace the existing operating system only after clear destructive-install warnings and explicit confirmation. Dual-boot support will be offered only where partition handling is proven safe. Apple Silicon is not currently supported.
+
+Both editions use the same ChatOS kernel, services, and desktop. The Window edition adds a host-side VM launcher and virtual devices; Native uses firmware boot and physical device drivers. See [Edition architecture](docs/EDITIONS.md).
+
 ## Platform direction
 
 The first target is x86_64 PCs and virtual machines. QEMU is the intended initial test environment. Limine is the boot protocol/bootloader interface; it is not the ChatOS kernel.
@@ -69,10 +78,12 @@ Set OVMF_CODE to an OVMF firmware image to test the UEFI path.
 - A fixed-capacity bitmap physical frame allocator for the first 64 GiB of physical address space.
 - COM1 serial diagnostics and a fatal panic path.
 - Host-side allocator tests run by GitHub Actions.
+- Limine HHDM offset discovery and physical/virtual conversion helpers.
+- Early x86_64 page-table discovery, mapping, unmapping, and translation primitives. User mappings are deliberately rejected until isolated address spaces exist.
 
 The M1 CI run passed: host-side allocator tests and the freestanding kernel build both succeeded. This is compile/test evidence, not proof that the kernel boots under QEMU or on physical hardware.
 
-The frame allocator returns physical addresses; it does not yet map or zero allocated pages. It is an early bootstrap allocator, not a complete virtual-memory manager. The bitmap is static, allocations are currently single-CPU only, and SMP locking is not implemented.
+The frame allocator returns physical addresses. The HHDM and page-table APIs are early primitives, not a complete virtual-memory manager: there is no address-space isolation, page-table reclamation, zero-on-allocation for general frames, guard-page policy, or SMP locking. The bitmap is static and allocations are currently single-CPU only. The current page-table code has compile/CI coverage but still needs QEMU runtime validation.
 
 There is no scheduler, IDT/exception handling, filesystem, user process, graphics stack, desktop, networking, or Linux compatibility layer yet. Do not treat planned capabilities as implemented.
 
