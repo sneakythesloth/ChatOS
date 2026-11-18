@@ -13,7 +13,7 @@ void _start(void) {
     serial_write("M2: IDT installed; CPU exceptions have fatal diagnostic handlers.\r\n");
 
 #ifdef CHATOS_EXCEPTION_SELF_TEST
-    serial_write("M2 test: triggering INT3 to verify exception dispatch.\\r\\n");
+    serial_write("M2 test: triggering INT3 to verify exception dispatch.\r\n");
     __asm__ volatile ("int3");
 #endif
 
