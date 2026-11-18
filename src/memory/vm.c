@@ -123,7 +123,11 @@ uint64_t vm_unmap_page(uint64_t virtual_address) {
     }
 
     uint64_t *pml4 = table_from_physical(kernel_page_table_root);
-    uint64_t *pdpt = table_from_physical(pml4[(virtual_address >> 39) & 0x1ffULL]);
+    if (pml4 == 0) return 0;
+    uint64_t pml4e = pml4[(virtual_address >> 39) & 0x1ffULL];
+    if ((pml4e & PAGE_PRESENT) == 0) return 0;
+
+    uint64_t *pdpt = table_from_physical(pml4e);
     if (pdpt == 0) return 0;
     uint64_t pdpt_entry = pdpt[(virtual_address >> 30) & 0x1ffULL];
     if ((pdpt_entry & PAGE_PRESENT) == 0 || (pdpt_entry & PAGE_SIZE_1G) != 0) return 0;
