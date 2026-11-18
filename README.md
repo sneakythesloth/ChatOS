@@ -96,11 +96,13 @@ Set `OVMF_CODE` to an OVMF firmware image to test the UEFI path.
 - COM1 serial diagnostics and a fatal panic path.
 - Ring-0 GDT and 64-bit TSS setup, including a dedicated IST1 double-fault stack.
 - 256-entry IDT with CPU exception stubs, error-code frame normalization, page-fault CR2 diagnostics, and fatal fallback handlers.
-- QEMU CI boot test and an `INT3` exception self-test; host-side physical allocator tests and ELF load-layout validation.
+- Legacy PIC remapped to vectors 0x20–0x2f, with only IRQ0 unmasked; register-preserving IRQ0 dispatch and PIC EOI.
+- PIT channel 0 at 100 Hz; a QEMU timer self-test enables interrupts, waits with `hlt`, and verifies five timer ticks.
+- QEMU CI normal boot, `INT3` exception and PIT interrupt self-tests; host-side physical allocator tests and ELF load-layout validation.
 
 Compilation and host allocator tests do not prove physical-hardware operation. HHDM and page-table code still require dedicated runtime validation; only successful kernel bootstrap and memory-map accounting have been verified under QEMU. The memory subsystem is early bootstrap code, not a complete virtual-memory manager. It has no address-space isolation, page-table reclamation, general page ownership, guard-page policy, or SMP/TLB-shootdown support. User mappings are intentionally rejected until privilege-separated address spaces are implemented. The physical-frame bitmap is static and allocation is single-CPU only.
 
-There is no scheduler, non-fatal IRQ/timer path, filesystem, user process, graphics stack, desktop, networking, or Linux compatibility layer yet. Do not treat planned capabilities as implemented.
+There is no scheduler, APIC/SMP support, monotonic clock abstraction, filesystem, user process, graphics stack, desktop, networking, or Linux compatibility layer yet. Do not treat planned capabilities as implemented.
 
 ## Roadmap
 
