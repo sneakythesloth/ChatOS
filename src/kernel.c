@@ -12,6 +12,11 @@ void _start(void) {
     interrupts_initialize();
     serial_write("M2: IDT installed; CPU exceptions have fatal diagnostic handlers.\r\n");
 
+#ifdef CHATOS_EXCEPTION_SELF_TEST
+    serial_write("M2 test: triggering INT3 to verify exception dispatch.\\r\\n");
+    __asm__ volatile ("int3");
+#endif
+
     serial_write("\r\n");
     serial_write("ChatOS kernel starting...\r\n");
     serial_write("Architecture : x86_64\r\n");
