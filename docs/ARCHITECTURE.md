@@ -25,12 +25,9 @@ The base-revision marker is three 64-bit words: the two protocol magic values an
 
 The current bootstrap allocator uses a static bitmap covering physical addresses below 64 GiB, with 4 KiB frames. All frames begin marked unavailable; only complete pages in Limine memory-map entries of type USABLE are released into the allocator. Physical frame zero remains reserved.
 
-The allocator supports single-frame allocation and free. It does not yet provide:
-- HHDM conversion helpers or virtual mappings.
-- Zero-on-allocation.
-- Page-table management or a kernel heap.
-- SMP-safe locking.
-- Dynamic bitmap growth above 64 GiB.
+The allocator supports single-frame allocation and free. It is single-CPU bootstrap code and does not yet provide zero-on-allocation, SMP-safe locking, or dynamic bitmap growth above 64 GiB.
+
+Limine HHDM discovery provides a direct-map offset and basic physical/virtual conversion helpers. The early x86_64 VM layer discovers the active CR3 and provides 4 KiB map/unmap/translate operations, including translation through existing 1 GiB and 2 MiB pages. It deliberately rejects user mappings and refuses to widen permissions on existing page-table ancestors. It is not yet a complete VM subsystem: there is no address-space isolation, page-table pruning/reclamation, general page ownership, or SMP/TLB-shootdown support. These paths have compile/CI coverage but still require QEMU runtime tests.
 
 The allocator is single-CPU bootstrap code. Do not enable concurrent allocation until synchronization is implemented.
 
@@ -44,6 +41,10 @@ The allocator is single-CPU bootstrap code. Do not enable concurrent allocation 
 - Keep kernel/userspace privilege boundaries explicit.
 - Treat external input, including AI-generated actions, as untrusted.
 - Keep Linux compatibility in a future userspace compatibility subsystem.
+
+## Distribution editions
+
+The two planned editions share the same kernel and userspace. ChatOS Window is a macOS-hosted VM application with an isolated virtual disk and no host bootloader/partition changes. ChatOS Native is a bare-metal installer for supported hardware, with destructive installation guarded by explicit confirmation. Host integration, installers, and both release packages remain unimplemented. Apple Silicon support is not claimed. See [Edition architecture](EDITIONS.md).
 
 ## Desktop target
 
