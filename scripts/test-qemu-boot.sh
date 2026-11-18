@@ -32,6 +32,7 @@ rm -f "$LOG_FILE" "$DEBUG_FILE"
 
 set +e
 timeout --signal=TERM --kill-after=3s "$TIMEOUT_SECONDS" "$QEMU" \
+    "${QEMU_FIRMWARE_ARGS[@]}" \\
     -machine q35 \
     -cpu qemu64 \
     -m 512M \
