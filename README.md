@@ -6,7 +6,11 @@ ChatOS is not a Linux distribution, desktop theme, or macOS application. It is i
 
 The product target is a polished, approachable experience for people accustomed to macOS, combined with an Omarchy-inspired keyboard-driven workflow: tiling, workspaces, terminal-first tools, and a cohesive visual system. Omarchy is inspiration only; ChatOS will not copy it or depend on its Linux base.
 
-> **Status:** Early kernel development. The C kernel builds in GitHub Actions and the physical-frame allocator tests pass. QEMU boot verification remains outstanding.
+> **Status:** Early kernel development, not yet a usable desktop operating system. The current kernel has a freestanding C11 x86_64 entry point, Limine boot requests, physical-frame allocation, HHDM helpers, and early page-table primitives. The QEMU boot smoke test is being added; until it passes, successful compilation is not evidence of a successful boot.
+
+## Screenshots
+
+There is not yet a genuine ChatOS desktop screenshot to show: the repository does not currently contain a graphical shell or a booted desktop. We will add screenshots captured from the running QEMU system as soon as the framebuffer/console path is implemented and verified. **No concept renders are presented as product screenshots.**
 
 ## Principles
 
@@ -33,16 +37,7 @@ ChatOS has two intended distribution editions sharing the same kernel and usersp
 - **ChatOS Window:** a resizable macOS-hosted virtual-machine window. The host app will launch a ChatOS VM (QEMU is the initial development path); its virtual disk is isolated from the Mac by default. It must never alter the host bootloader or partitions. This is a planned product, not yet packaged or runnable.
 - **ChatOS Native:** a bootable installer for explicitly supported x86_64 PCs. It installs ChatOS directly to hardware and can replace the existing operating system only after clear destructive-install warnings and explicit confirmation. Dual-boot support will be offered only where partition handling is proven safe. Apple Silicon is not currently supported.
 
-Both editions use the same ChatOS kernel, services, and desktop. The Window edition adds a host-side VM launcher and virtual devices; Native uses firmware boot and physical device drivers. See [Edition architecture](docs/EDITIONS.md).
-
-## Product editions
-
-ChatOS has two planned editions built from the same independent kernel and userspace:
-
-- **ChatOS Window:** a macOS-hosted application that opens ChatOS in a separate, resizable virtual-machine window. The first implementation target is QEMU; a native macOS virtualization backend can be evaluated later. It must use an isolated virtual disk by default and must not alter the Mac's bootloader or partitions.
-- **ChatOS Native:** a bootable installer and bare-metal system for explicitly supported hardware. It can replace the existing operating system only after a clear, destructive-install warning and explicit confirmation. Hardware support is validated per device.
-
-These are product targets, not currently shippable editions. The repository currently contains an early x86_64 kernel, not a finished desktop or macOS VM application.
+Both editions use the same ChatOS kernel, services, and desktop. The Window edition adds a host-side VM launcher and virtual devices; Native uses firmware boot and physical device drivers. See [Product edition requirements](docs/PRODUCT_EDITIONS.md).
 
 ## Platform direction
 
@@ -52,33 +47,43 @@ ARM64 is a later architecture effort. Apple Silicon support is a long-term inves
 
 ## Repository layout
 
-- src/kernel.c: kernel entry point.
-- src/boot/: Limine request structures and declarations.
-- src/arch/x86_64/: x86_64 CPU and serial primitives.
-- src/memory/: memory map handling, physical frame allocator, HHDM helpers, and early page-table primitives.
-- docs/PRODUCT_EDITIONS.md: Window and Native edition architecture and safety requirements.
-- src/include/: shared kernel headers.
-- src/panic.c: fatal kernel diagnostics.
-- linker.ld: kernel ELF layout.
-- scripts/: kernel build, tests, ISO creation, and QEMU launch.
-- tests/: host-side kernel subsystem tests.
-- docs/: architecture, roadmap, and milestone records.
+- `src/kernel.c`: kernel entry point.
+- `src/boot/`: Limine request structures and declarations.
+- `src/arch/x86_64/`: x86_64 CPU and serial primitives.
+- `src/memory/`: memory map handling, physical frame allocator, HHDM helpers, and early page-table primitives.
+- `docs/PRODUCT_EDITIONS.md`: Window and Native edition architecture and safety requirements.
+- `src/include/`: shared kernel headers.
+- `src/panic.c`: fatal kernel diagnostics.
+- `linker.ld`: kernel ELF layout.
+- `scripts/`: kernel build, tests, ISO creation, QEMU launch, and QEMU boot smoke test.
+- `tests/`: host-side kernel subsystem tests.
+- `docs/`: architecture, roadmap, and milestone records.
 
 ## Build and test
 
 Prerequisites: Clang with the x86_64-unknown-none-elf target, LLD, a host C compiler, and Bash.
 
-    bash scripts/test-frame-allocator.sh
-    bash scripts/build-kernel.sh
+```sh
+bash scripts/test-frame-allocator.sh
+bash scripts/build-kernel.sh
+```
 
-The kernel output is build/chatos.elf.
+The kernel output is `build/chatos.elf`.
 
 For a bootable ISO, install xorriso and obtain Limine's BIOS/UEFI image files and executable. Then:
 
-    LIMINE_DIR=/path/to/limine bash scripts/build-iso.sh
-    bash scripts/run-qemu.sh
+```sh
+LIMINE_DIR=/path/to/limine bash scripts/build-iso.sh
+bash scripts/run-qemu.sh
+```
 
-Set OVMF_CODE to an OVMF firmware image to test the UEFI path.
+For an automated headless boot check (after building the ISO):
+
+```sh
+bash scripts/test-qemu-boot.sh
+```
+
+Set `OVMF_CODE` to an OVMF firmware image to test the UEFI path.
 
 ## Current kernel capabilities
 
@@ -88,11 +93,9 @@ Set OVMF_CODE to an OVMF firmware image to test the UEFI path.
 - Limine HHDM discovery and basic physical/virtual conversion helpers.
 - Early x86_64 active-page-table discovery and 4 KiB map/unmap/translate primitives.
 - COM1 serial diagnostics and a fatal panic path.
-- GitHub Actions builds the freestanding kernel and runs the allocator tests.
+- GitHub Actions builds the freestanding kernel and runs allocator tests; a QEMU boot smoke-test job is included to establish actual boot evidence.
 
-The latest verified CI runs prove compilation/linking and the host allocator tests pass. They do not prove a successful QEMU boot or physical-hardware operation. HHDM and page-table code still require runtime validation.
-
-The memory subsystem is early bootstrap code, not a complete virtual-memory manager. It has no address-space isolation, page-table reclamation, general page ownership, guard-page policy, or SMP/TLB-shootdown support. User mappings are intentionally rejected until privilege-separated address spaces are implemented. The physical-frame bitmap is static and allocation is single-CPU only.
+Compilation and host allocator tests do not prove physical-hardware operation. HHDM and page-table code still require runtime validation beyond the initial boot marker. The memory subsystem is early bootstrap code, not a complete virtual-memory manager. It has no address-space isolation, page-table reclamation, general page ownership, guard-page policy, or SMP/TLB-shootdown support. User mappings are intentionally rejected until privilege-separated address spaces are implemented. The physical-frame bitmap is static and allocation is single-CPU only.
 
 There is no scheduler, IDT/exception handling, filesystem, user process, graphics stack, desktop, networking, or Linux compatibility layer yet. Do not treat planned capabilities as implemented.
 
@@ -101,7 +104,7 @@ There is no scheduler, IDT/exception handling, filesystem, user process, graphic
 1. M0 — Kernel bootstrap: C entry, Limine, serial output, linker and build foundation; prove boot.
 2. M1 — Boot information and physical memory: validate Limine responses, parse memory map, allocate/free physical frames.
 3. M2 — CPU and interrupts: GDT, TSS, IDT, exceptions, interrupt controllers, timers.
-4. M3 — Drivers: PCI, storage, keyboard, pointer, framebuffer, driver model.
+4. M3 — Drivers: PCI, storage, keyboard, pointer, framebuffer/graphics.
 5. M4 — Processes: privilege separation, scheduler, syscalls, ELF loader, IPC.
 6. M5 — Userspace: VFS, init, service manager, shell, terminal, package management.
 7. M6 — Desktop: compositor, tiling, workspaces, launcher, settings, first-party apps.
