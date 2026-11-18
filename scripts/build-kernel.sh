@@ -54,8 +54,6 @@ SOURCES=(
     src/arch/x86_64/interrupts.c
     src/arch/x86_64/pic.c
     src/arch/x86_64/timer.c
-    src/arch/x86_64/pic.c
-    src/arch/x86_64/timer.c
     src/panic.c
 )
 
