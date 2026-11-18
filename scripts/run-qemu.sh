@@ -24,7 +24,6 @@ QEMU_ARGS=(
     -cdrom ChatOS.iso
 )
 
-# Supply an OVMF firmware image to exercise the ISO's UEFI boot path.
 if [[ -n "${OVMF_CODE:-}" ]]; then
     QEMU_ARGS=(-bios "$OVMF_CODE" "${QEMU_ARGS[@]}")
 fi
