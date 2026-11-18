@@ -43,6 +43,14 @@ jobs:
         run: |
           bash scripts/build-iso.sh
           bash scripts/test-qemu-boot.sh
+      - name: Test PIT hardware interrupts in QEMU
+        env:
+          LIMINE_DIR: ${{ github.workspace }}/limine
+          CHATOS_TIMER_SELF_TEST: "1"
+          EXPECTED_SERIAL_MARKER: "PIT timer: 5 ticks received."
+        run: |
+          bash scripts/build-iso.sh
+          bash scripts/test-qemu-boot.sh
       - name: Upload serial boot log
         if: always()
         uses: actions/upload-artifact@v4
