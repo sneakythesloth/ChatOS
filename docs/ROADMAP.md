@@ -21,7 +21,11 @@ A milestone is complete only when its acceptance tests have evidence. Committing
 - [x] GitHub Actions kernel build and allocator test job pass.
 - [ ] Boot under QEMU and verify reported memory.
 - [ ] Verify allocation/free using actual boot memory map.
-- [ ] Add HHDM helpers and page-table management in a subsequent memory substage.
+- [x] Add Limine HHDM discovery and physical/virtual conversion helpers (compile/CI verified; QEMU runtime test pending).
+- [x] Add initial x86_64 page-table discovery and 4 KiB map/unmap/translate primitives (compile/CI verified; QEMU runtime test pending).
+- [ ] Add VM host-side tests with a page-table model or suitable harness.
+- [ ] Add QEMU runtime validation of HHDM and page-table operations.
+- [ ] Add address-space ownership, safe reclamation, and SMP/TLB synchronization.
 
 ## M2 — CPU and interrupts
 - [ ] GDT and TSS setup.
@@ -66,7 +70,14 @@ A milestone is complete only when its acceptance tests have evidence. Committing
 - [ ] Narration, action history, pause/stop, and user takeover.
 - [ ] NO AI, FULL AI, and HYBRID mode enforcement.
 
-## M8 — Compatibility and hardware
+## M8 — Distribution editions and compatibility
+- [ ] ChatOS Window: macOS host launcher, resizable VM window, isolated virtual disk, safe shutdown and snapshots.
+- [ ] ChatOS Window: evaluate QEMU first, then native macOS virtualization APIs where licensing/entitlements and device support permit.
+- [ ] ChatOS Native: bootable installer for explicitly supported x86_64 hardware.
+- [ ] Native installer: verified partition workflow, backup warnings, destructive-action confirmation, and recovery path.
+- [ ] Shared release pipeline for Window and Native editions.
+
+## M9 — 
 - [ ] Broader x86_64 hardware and firmware support.
 - [ ] ARM64 architecture port.
 - [ ] Linux ELF and syscall ABI compatibility.
