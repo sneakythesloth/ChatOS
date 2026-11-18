@@ -2,9 +2,9 @@
 
 ## Direction
 
-ChatOS is an independent operating system. The kernel, userspace, system services, and desktop are ChatOS components. Linux is not the host kernel or the base distribution.
+ChatOS is an independent operating system. The kernel, userspace, system services, and desktop are ChatOS components. Linux is not the host kernel or base distribution.
 
-The initial target is x86_64 UEFI, with QEMU as the first development machine. Limine is used as a bootloader/protocol implementation; it loads the ChatOS kernel but is not the ChatOS kernel itself.
+The initial target is x86_64. Limine is the bootloader/protocol implementation; it loads ChatOS but is not the ChatOS kernel.
 
 ## Layers
 
@@ -13,30 +13,32 @@ The initial target is x86_64 UEFI, with QEMU as the first development machine. L
 3. **Drivers:** Device discovery, storage, input, graphics, networking, and hardware buses.
 4. **Userspace:** Init, service manager, libraries, shell, system utilities, and applications.
 5. **Desktop:** Compositor, window manager, launcher, workspaces, status surfaces, and settings.
-6. **AI runtime:** ChatGPT connection, permission-scoped tools, task execution, and the AI cursor.
+6. **AI runtime:** ChatGPT connection, permission-scoped tools, task execution, and AI cursor.
 
 ## Initial implementation
 
-The current bootstrap is a freestanding Rust binary compiled for x86_64-unknown-none. It uses the Limine boot protocol and writes diagnostics to the first PC serial port (COM1).
+The bootstrap is a freestanding C11 binary compiled by Clang for x86_64-unknown-none-elf and linked with LLD. It uses Limine and writes diagnostics to COM1.
 
 The kernel currently:
-- Declares the Limine request markers and base revision.
-- Enters at the x86_64 kernel entry point.
-- Disables CPU interrupts until an IDT and interrupt-controller setup exist.
+- Declares Limine request markers and base revision.
+- Enters through the x86_64 kernel entry point.
+- Disables CPU interrupts until exception and interrupt-controller setup exists.
 - Initializes COM1 and reports that the entry point was reached.
 - Halts the CPU.
 
 It does **not** yet parse bootloader responses, initialize memory management, handle interrupts, enumerate devices, or start user processes.
 
-## Design constraints
+## C kernel rules
 
-- Keep architecture-specific code behind narrow interfaces.
+- Compile freestanding; do not depend on a hosted C runtime or libc.
+- Keep compiler-generated stack protection, position-independent code, and the red zone disabled until explicitly supported.
+- Avoid compiler builtins that could introduce unresolved runtime calls.
+- Keep architecture-specific inline assembly behind narrow interfaces.
 - Do not enable interrupts before exception handlers and interrupt controllers are ready.
 - Do not enable heap allocation before a physical allocator and kernel heap exist.
-- Keep kernel and userspace privilege boundaries explicit.
-- Treat all external input, including AI-generated actions, as untrusted.
-- Require explicit authorization for destructive or externally visible actions.
-- Keep Linux compatibility in a userspace compatibility subsystem rather than coupling the kernel to Linux internals.
+- Keep kernel/userspace privilege boundaries explicit.
+- Treat external input, including AI-generated actions, as untrusted.
+- Keep Linux compatibility in a userspace compatibility subsystem.
 
 ## Desktop design target
 
@@ -44,4 +46,4 @@ The intended desktop should combine a macOS-level finish with an Omarchy-inspire
 
 ## AI cursor architecture
 
-The AI pointer belongs in the future compositor/input model as a separately rendered pointer identity. It must not be conflated with physical user input. The input router should tag event origin, enforce capabilities, expose pause/cancel, and require confirmation for high-impact operations.
+The AI pointer belongs in the future compositor/input model as a separately rendered pointer identity. The input router should tag event origin, enforce capabilities, expose pause/cancel, and require confirmation for high-impact operations.
