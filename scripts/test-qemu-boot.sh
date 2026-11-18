@@ -15,7 +15,32 @@ if [[ -n "${OVMF_CODE:-}" ]]; then
         echo "OVMF_CODE does not point to a firmware image: $OVMF_CODE" >&2
         exit 1
     }
-    QEMU_FIRMWARE_ARGS=(-bios "$OVMF_CODE")
+
+    # OVMF is a UEFI flash image, not a legacy PC BIOS image. QEMU needs
+    # the read-only code flash and a separate writable variables flash.
+    OVMF_VARS_PATH="${OVMF_VARS:-}"
+    if [[ -z "$OVMF_VARS_PATH" ]]; then
+        case "$OVMF_CODE" in
+            *_CODE_4M.fd) OVMF_VARS_PATH="${OVMF_CODE%_CODE_4M.fd}_VARS_4M.fd" ;;
+            *_CODE.fd) OVMF_VARS_PATH="${OVMF_CODE%_CODE.fd}_VARS.fd" ;;
+            *)
+                echo "Set OVMF_VARS to the matching writable variables image." >&2
+                exit 1
+                ;;
+        esac
+    fi
+    test -f "$OVMF_VARS_PATH" || {
+        echo "OVMF_VARS does not point to a firmware variables image: $OVMF_VARS_PATH" >&2
+        exit 1
+    }
+
+    mkdir -p build
+    OVMF_VARS_COPY="$ROOT_DIR/build/OVMF_VARS.fd"
+    cp "$OVMF_VARS_PATH" "$OVMF_VARS_COPY"
+    QEMU_FIRMWARE_ARGS=(
+        -drive "if=pflash,format=raw,unit=0,readonly=on,file=$OVMF_CODE"
+        -drive "if=pflash,format=raw,unit=1,file=$OVMF_VARS_COPY"
+    )
 fi
 
 command -v "$QEMU" >/dev/null 2>&1 || {
