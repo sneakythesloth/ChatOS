@@ -1,198 +1,160 @@
 # ChatOS
 
-**A modern, macOS-first operating environment powered by ChatGPT — with three modes: NO AI, FULL AI, and HYBRID.**
+**An independent operating system built from the ground up, with a distinctive desktop and ChatGPT as a first-class computer-use agent.**
 
-ChatOS is an ambitious desktop operating-environment project. The goal is to create the experience ourselves: a distinctive desktop, polished window and application design, thoughtful interactions, and a first-class AI collaborator. It should feel at home to macOS users while keeping a path open for Linux portability and Linux application support.
+ChatOS is a new operating system project—not a Linux distribution, desktop theme, or macOS application. It will have its own kernel, system services, application environment, desktop shell, and visual identity.
 
-ChatOS is not intended to be a Linux distribution. macOS is the primary design and development target. Linux support is a portability objective, not the product's identity.
+The product should feel polished and approachable to people accustomed to macOS, while taking inspiration from Omarchy's keyboard-driven workflow, tiling, terminal-friendly tools, and cohesive visual design. The long-term goal is to build the experience ourselves rather than assemble a conventional Linux desktop.
 
-> **Project status:** Early-stage. The architecture, interface, operating modes, and AI interaction model are goals for development—not claims that these features are already implemented.
+> **Project status:** Very early development. The first milestone is a minimal x86_64 kernel booting under UEFI through the Limine boot protocol. Most operating-system features described below are planned, not yet implemented.
 
-## The three modes
+## Product principles
+
+- **Independent kernel:** ChatOS owns its kernel and system architecture. It does not use the Linux kernel.
+- **macOS-quality experience:** Thoughtful typography, fluid interactions, excellent defaults, coherent settings, and a modern desktop.
+- **Omarchy-inspired workflow:** Keyboard-first navigation, tiling, workspaces, a strong terminal experience, and a unified aesthetic—without copying Omarchy or depending on its Linux base.
+- **Build the platform ourselves:** Develop the kernel, core services, desktop shell, and first-party applications as ChatOS components.
+- **Linux application portability:** Linux compatibility is a later compatibility layer objective, not the foundation of the OS.
+- **AI as a native capability:** ChatGPT should be able to understand and visually operate the computer through a distinct second cursor, with explicit user control.
+
+## Operating modes
 
 ### NO AI
-
-A complete, conventional ChatOS experience with AI functionality switched off.
-
-- No ChatGPT assistant, AI cursor, or AI-generated actions.
-- Core desktop, navigation, settings, and application workflows remain usable.
-- Designed for users who want a focused traditional environment.
+A complete operating experience with AI services disabled. Core system functions and applications must remain useful without an AI connection.
 
 ### FULL AI
-
-An AI-first experience with ChatGPT integrated into the desktop.
-
-- ChatGPT is available as a first-class system assistant.
-- Ask for help with supported tasks using natural language.
-- The assistant can visually demonstrate and perform supported actions through its own on-screen cursor.
-- Actions should be visible, permission-aware, interruptible, and reviewable.
+ChatGPT is a first-class assistant. It can understand requests and, when authorized, perform supported tasks through the ChatOS computer-use system.
 
 ### HYBRID
+The conventional desktop remains primary, with ChatGPT available on demand. Users can watch, pause, stop, or take over AI-operated tasks.
 
-The full conventional desktop with AI available when wanted.
+## The second cursor
 
-- Use the desktop normally with your own cursor.
-- Invoke ChatGPT for selected tasks.
-- Let the assistant use its own visual cursor for an approved task, then return to normal interaction.
-- AI remains optional rather than taking over the entire experience.
+ChatOS is intended to support two visually distinct pointers:
 
-Users should be able to choose a mode during setup and change it later in settings.
+- **User cursor:** Controlled by the user's mouse or trackpad.
+- **AI cursor:** A separate on-screen pointer controlled by ChatGPT during an approved task.
 
-## Product vision
+The AI cursor should be able to point, click, type, drag, and scroll through supported system interfaces. Its actions must be visible and understandable. Users must be able to pause, stop, and take control immediately. Consequential actions require explicit confirmation.
 
-### A desktop designed from the ground up
+This will be implemented as a first-class part of the ChatOS compositor/windowing and input architecture—not as an afterthought. The exact mechanism will depend on the graphics and input stack built for the OS.
 
-ChatOS should have its own visual identity and interaction model rather than simply reskinning an existing Linux desktop.
+## Platform and architecture direction
 
-Design priorities:
+### Initial target: x86_64 UEFI
 
-- Modern, sleek, carefully spaced interface.
-- Excellent typography, iconography, animation, and visual hierarchy.
-- Fluid window management, workspaces, desktop navigation, and application launching.
-- Consistent native-feeling menus, dialogs, notifications, settings, and system surfaces.
-- Thoughtful keyboard shortcuts and trackpad gestures.
-- Responsive performance and accessibility.
-- A coherent design system so every built-in application feels like part of one product.
+The first development target is x86_64 PCs and virtual machines booting through UEFI. QEMU will be the initial test environment. This gives the project a practical route to a real, independently bootable kernel.
 
-The visual quality bar is the polish and consistency macOS users expect, while ChatOS develops its own character.
+### Future hardware targets
 
-### Two cursors: you and ChatGPT
+- Physical x86_64 PCs after virtual-machine boot and driver foundations are stable.
+- ARM64 as a later architecture milestone.
+- Apple Silicon support is a long-term goal, not an initial compatibility claim. It requires substantial platform-specific boot, firmware, and device-driver work.
 
-A defining feature of ChatOS is the idea of a second, distinct cursor dedicated to the AI assistant.
+### Linux application compatibility
 
-- **User cursor:** Your normal pointer, controlled by your mouse or trackpad.
-- **AI cursor:** A separate, clearly identifiable on-screen pointer controlled by ChatGPT when an AI task is active.
+ChatOS will not be Linux-based. Running Linux applications requires a deliberate compatibility strategy, including an ELF loader, Linux ABI/syscall compatibility, process and filesystem semantics, and a packaging/install workflow. This is a later milestone and will not be treated as automatic compatibility.
 
-The AI cursor should make computer-use actions understandable. It can move to a control, highlight it, click, type, drag, scroll, and show what it is doing. The user should be able to distinguish assistant actions from their own input at a glance.
+## Repository structure
 
-Important design and safety requirements:
+The initial kernel is written in Rust with no_std and targets x86_64. The first boot path uses the Limine boot protocol. The repository will grow into separate kernel, architecture, memory, process, driver, userspace, and desktop components as those systems are implemented.
 
-- The AI cursor must never masquerade as the user's pointer.
-- Show the assistant's current action and, where practical, its next intended step.
-- Let the user pause, stop, or take control immediately.
-- Ask for confirmation before consequential actions such as deleting data, sending messages, installing software, or changing security settings.
-- Restrict the assistant to explicit permissions and supported application interfaces.
-- Keep an auditable action history and provide clear error recovery.
+## Build and run the kernel
 
-**Implementation note:** macOS generally exposes one system pointer, not two independent hardware cursors. The initial implementation should therefore render a second cursor as a ChatOS-owned visual overlay and connect it to controlled UI actions or approved macOS accessibility/automation APIs. A true second OS-level pointer should not be promised unless the target platform supports it.
+The initial milestone targets QEMU on x86_64.
 
-## Platform strategy
+Prerequisites:
+- Rust toolchain and the x86_64-unknown-none target.
+- QEMU with x86_64 system emulation.
+- xorriso.
+- Limine bootloader binaries and the Limine utility.
 
-### macOS first
+Build the bootable ISO (set LIMINE_DIR to the directory containing the Limine binaries):
 
-macOS is the primary platform and the initial quality target. ChatOS should integrate with macOS where appropriate—such as accessibility, permissions, windowing, input, and application launching—while creating its own desktop experience and built-in applications.
+    rustup target add x86_64-unknown-none
+    LIMINE_DIR=/path/to/limine ./scripts/build-iso.sh
 
-The first milestone is a polished ChatOS desktop experience running on macOS, not a replacement kernel or a Linux-based operating system.
+Run it in QEMU:
 
-### Linux portability
+    ./scripts/run-qemu.sh
 
-Linux is a secondary portability target. The architecture should avoid unnecessary platform lock-in so the desktop and core services can be ported to Linux over time.
+The initial kernel reports startup over the emulated serial console. Build and boot instructions will expand as memory management, interrupts, and device support are added.
 
-Linux application support should be treated as a compatibility and packaging capability:
+## Development roadmap
 
-- Support installing and launching Linux applications when ChatOS is running on a compatible Linux host.
-- Investigate standard Linux packaging formats and package managers, rather than inventing a package ecosystem without a need.
-- Keep application installation separate from the desktop shell so platform-specific backends can be added.
-- Clearly communicate dependencies, permissions, and compatibility to users.
+### Milestone 0 — Bootable kernel foundation
+- [x] Establish a freestanding Rust kernel project.
+- [x] Add x86_64 entry point and Limine request markers.
+- [x] Add serial output and panic reporting.
+- [x] Add linker script, boot configuration, and QEMU ISO scripts.
+- [ ] Verify the first boot in QEMU and capture the boot log.
 
-Running Linux applications on macOS is a separate technical problem and should not be implied by Linux portability.
+### Milestone 1 — Boot protocol and physical memory
+- [ ] Parse and validate bootloader responses.
+- [ ] Read the UEFI/bootloader memory map.
+- [ ] Implement physical page-frame allocation.
+- [ ] Establish kernel virtual memory and page-table management.
+- [ ] Add heap allocation after the page allocator is reliable.
 
-## Architecture principles
+### Milestone 2 — CPU, interrupts, and time
+- [ ] Set up the Global Descriptor Table and Task State Segment.
+- [ ] Configure the Interrupt Descriptor Table and exception handlers.
+- [ ] Add programmable interrupt controller support.
+- [ ] Add a monotonic clock and timer interrupts.
+- [ ] Improve diagnostics for CPU exceptions and kernel faults.
 
-The implementation should be modular, with clear boundaries between:
+### Milestone 3 — Drivers and hardware discovery
+- [ ] Enumerate PCI/PCIe devices.
+- [ ] Add storage and block-device abstractions.
+- [ ] Add keyboard and pointer input.
+- [ ] Add framebuffer and graphics output.
+- [ ] Establish a driver model and device permissions.
 
-1. **Desktop shell:** The desktop, panels, launcher, workspaces, window management, and system surfaces.
-2. **Design system:** Shared components, typography, icons, themes, motion, and interaction patterns.
-3. **Application framework:** APIs and conventions for ChatOS applications.
-4. **Core services:** Settings, notifications, files, search, app lifecycle, and permissions.
-5. **Platform adapters:** macOS integration first, with Linux adapters as portability develops.
-6. **AI runtime:** ChatGPT connection, context management, tool orchestration, and mode policy.
-7. **Computer-use controller:** The assistant cursor, visual state, input simulation, confirmations, and action history.
+### Milestone 4 — Processes and system calls
+- [ ] Define user/kernel privilege boundaries.
+- [ ] Implement context switching and scheduling.
+- [ ] Define a stable system-call ABI.
+- [ ] Load and execute user-space ELF programs.
+- [ ] Add process lifecycle, signals/events, and IPC foundations.
 
-Prefer well-defined interfaces between modules so the AI runtime cannot bypass the same permission and safety boundaries used by the rest of the system.
+### Milestone 5 — Storage and userspace
+- [ ] Implement a virtual filesystem layer.
+- [ ] Add an initial writable filesystem and persistent storage.
+- [ ] Build an init process and service manager.
+- [ ] Add a shell, terminal, and basic system utilities.
+- [ ] Define application packaging, installation, and updates.
 
-## Privacy and security
+### Milestone 6 — Graphics and desktop
+- [ ] Build a graphics stack and compositor.
+- [ ] Implement windows, surfaces, focus, and input routing.
+- [ ] Create a keyboard-driven launcher and tiling window manager.
+- [ ] Add workspaces, status bar, notifications, and system settings.
+- [ ] Establish a coherent design system with polished motion and typography.
+- [ ] Build first-party applications.
 
-- Never commit API keys, tokens, passwords, or other secrets.
-- Make AI activity visible and explain what information is being shared.
-- Request only the permissions needed for a task.
-- Keep sensitive actions behind explicit user confirmation.
-- Provide an immediate stop/pause mechanism for computer-use tasks.
-- Keep user data and assistant action logs under clear user control.
-- Make NO AI mode genuinely usable without an AI service connection.
+### Milestone 7 — ChatGPT and computer use
+- [ ] Implement secure AI service integration.
+- [ ] Define permission-scoped tools and user approval.
+- [ ] Add the separate AI cursor to the compositor.
+- [ ] Support visual targeting and controlled input injection.
+- [ ] Add action narration, pause/stop, user takeover, and audit history.
+- [ ] Implement NO AI, FULL AI, and HYBRID policies end to end.
 
-## Getting started
+### Milestone 8 — Compatibility and hardware expansion
+- [ ] Improve x86_64 hardware support and test on physical machines.
+- [ ] Design an ARM64 architecture port.
+- [ ] Implement Linux ELF and ABI compatibility in a controlled environment.
+- [ ] Add Linux application installation and dependency management.
+- [ ] Evaluate Apple Silicon boot and device support as a separate platform effort.
 
-ChatOS is at an early stage. Build, installation, and development instructions will be added once the initial macOS prototype and project structure are established.
+## Current implementation status
 
-## Roadmap
-
-### Phase 0 — Product definition and foundations
-- [ ] Define the macOS-first product scope and non-goals.
-- [ ] Choose the initial implementation stack and repository structure.
-- [ ] Write architecture decision records for the desktop shell, rendering, window management, and platform adapters.
-- [ ] Establish coding standards, testing, CI, and release conventions.
-- [ ] Create the ChatOS visual design language and interaction principles.
-
-### Phase 1 — ChatOS desktop prototype (macOS)
-- [ ] Build the desktop shell and application lifecycle.
-- [ ] Create the wallpaper/desktop surface, dock or taskbar, menu/system bar, launcher, and settings.
-- [ ] Implement windows, focus, resizing, snapping, and basic workspaces.
-- [ ] Add polished transitions, keyboard shortcuts, and trackpad-friendly interactions.
-- [ ] Build a small set of first-party applications to validate the design system.
-- [ ] Make the NO AI mode complete and useful.
-
-### Phase 2 — Design quality and daily usability
-- [ ] Refine typography, icons, spacing, themes, and motion.
-- [ ] Implement notifications, global search, file browsing, and app discovery.
-- [ ] Add accessibility support, localization foundations, and robust error states.
-- [ ] Profile startup, memory use, rendering, and interaction latency.
-- [ ] Test on a range of supported macOS versions and screen sizes.
-
-### Phase 3 — ChatGPT integration
-- [ ] Design secure account/API configuration and the AI service boundary.
-- [ ] Add conversational assistant UI and context controls.
-- [ ] Implement the FULL AI and HYBRID mode policies.
-- [ ] Define tool permissions and a user-approval model.
-- [ ] Make AI availability and service failures understandable without breaking the desktop.
-
-### Phase 4 — The second cursor and visual computer use
-- [ ] Design a distinct AI cursor with clear identity, motion, and status.
-- [ ] Render the cursor as a separate ChatOS visual layer.
-- [ ] Build a computer-use controller for supported ChatOS-native interfaces.
-- [ ] Add visual targeting, click, typing, scrolling, and drag actions.
-- [ ] Add live action narration/status, pause, stop, and user takeover.
-- [ ] Add confirmation gates for high-impact actions.
-- [ ] Record action history and support recovery from failed tasks.
-- [ ] Explore macOS Accessibility APIs and approved automation interfaces for external apps, with explicit user permissions.
-- [ ] Test reliability and prevent unintended actions.
-
-### Phase 5 — Application ecosystem
-- [ ] Define a ChatOS application API and developer documentation.
-- [ ] Build first-party applications that demonstrate consistent system integration.
-- [ ] Create an app discovery and installation experience.
-- [ ] Design app sandboxing, permissions, updates, and uninstall flows.
-- [ ] Support macOS applications through the appropriate macOS mechanisms.
-
-### Phase 6 — Linux portability
-- [ ] Separate platform-independent desktop/core code from macOS-specific services.
-- [ ] Implement a Linux platform adapter.
-- [ ] Bring up the desktop shell on a selected Linux environment.
-- [ ] Add Linux application installation and launching through established package formats/managers.
-- [ ] Document platform differences and test supported distributions.
-- [ ] Keep macOS as the primary product and design reference.
-
-### Phase 7 — Beta and release readiness
-- [ ] Complete end-to-end tests for NO AI, FULL AI, and HYBRID.
-- [ ] Conduct security, privacy, accessibility, and performance reviews.
-- [ ] Add crash reporting with appropriate privacy controls and user consent.
-- [ ] Publish installation, upgrade, backup, and recovery documentation.
-- [ ] Establish a release channel and issue-reporting process.
+Only the minimal kernel bootstrap is being established. There is not yet a general-purpose OS: no scheduler, user processes, filesystem, graphics compositor, desktop, or Linux compatibility layer. Each milestone should add working, reviewable functionality and include build/test evidence before being marked complete.
 
 ## Contributing
 
-Ideas, design feedback, bug reports, and contributions are welcome. When opening an issue or pull request, describe the affected platform, operating mode, and relevant testing.
+Contributions and design discussions are welcome. Please identify the affected architecture, subsystem, and milestone. Kernel changes should include build instructions and reproducible test steps.
 
 ## License
 
-No license has been specified yet. Until a license is added to this repository, do not assume that the code is available for reuse, modification, or redistribution.
+No license has been specified yet. Until a license is added, do not assume the code is available for reuse, modification, or redistribution.
