@@ -16,7 +16,7 @@ headers="$(readelf -lW "$ELF")"
 printf '%s\n' "$headers"
 
 load_count=0
-while read -r virtual physical flags execute; do
+while read -r virtual physical flags; do
     [[ -n "$virtual" ]] || continue
     load_count=$((load_count + 1))
 
