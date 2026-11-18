@@ -17,3 +17,25 @@ jobs:
         run: bash scripts/test-frame-allocator.sh
       - name: Build freestanding C kernel
         run: bash scripts/build-kernel.sh
+
+  qemu-boot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install boot-test dependencies
+        run: sudo apt-get update && sudo apt-get install -y clang lld xorriso qemu-system-x86 git make
+      - name: Build Limine bootloader
+        run: |
+          git clone --depth=1 --branch=v8.x-binary https://github.com/limine-bootloader/limine.git limine
+          make -C limine
+      - name: Build bootable ISO
+        run: LIMINE_DIR="$PWD/limine" bash scripts/build-iso.sh
+      - name: Boot ChatOS in QEMU
+        run: bash scripts/test-qemu-boot.sh
+      - name: Upload serial boot log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chatos-qemu-serial-log
+          path: build/qemu-serial.log
+          if-no-files-found: ignore
