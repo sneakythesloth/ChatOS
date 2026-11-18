@@ -40,8 +40,11 @@ A milestone is complete only when its acceptance tests have evidence. Committing
 - [x] Reserve TSS IST1 as the double-fault stack and assign it to vector 8.
 - [x] Exercise the breakpoint exception (INT3) in QEMU and verify vector/reason/panic diagnostics.
 - [ ] Deliberately exercise the double-fault IST path under QEMU.
-- [ ] Remap/mask the legacy PIC and add safe IRQ dispatch.
-- [ ] Add PIT or HPET timer and a monotonic clock; verify timer ticks in QEMU.
+- [x] Remap and mask the legacy PIC; unmask only IRQ0 after installing its handler.
+- [x] Add register-preserving IRQ0 dispatch and PIC EOI acknowledgement.
+- [x] Program PIT channel 0 at 100 Hz and verify five real timer interrupts in QEMU using `sti; hlt`.
+- [ ] Add a general monotonic clock API and calibrate against a more stable clock source.
+- [ ] Test the dedicated double-fault IST path under QEMU.
 - [ ] APIC interrupt-controller support.
 - [ ] SMP discovery and per-CPU state.
 
