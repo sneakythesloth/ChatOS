@@ -6,17 +6,19 @@ A milestone is complete only when its acceptance tests have evidence. Committing
 - [x] Freestanding C11 entry point and x86_64 CPU primitives.
 - [x] COM1 serial output and panic path.
 - [x] Limine boot configuration and linker layout.
-- [ ] Build and boot the kernel under QEMU.
+- [x] Freestanding kernel compile/link in GitHub Actions.
+- [ ] Boot the kernel under QEMU.
 - [ ] Verify BIOS and UEFI boot paths.
 
-## M1 — Boot information and physical memory (implementation scaffold; verification pending)
+## M1 — Boot information and physical memory (build and host tests pass; runtime verification pending)
 - [x] Define Limine base revision 3 and memory-map request structures.
 - [x] Validate bootloader base revision and memory-map response.
 - [x] Validate memory-map entry pointers, lengths, and overflow.
 - [x] Parse usable-memory totals.
 - [x] Implement fixed 64 GiB bitmap-based 4 KiB physical frame allocator.
 - [x] Add single-frame allocate/free API.
-- [ ] Add unit tests for allocator edge cases.
+- [x] Add host-side tests for allocation order, exhaustion, reserved ranges, and invalid/double frees.
+- [x] GitHub Actions kernel build and allocator test job pass.
 - [ ] Boot under QEMU and verify reported memory.
 - [ ] Verify allocation/free using actual boot memory map.
 - [ ] Add HHDM helpers and page-table management in a subsequent memory substage.
