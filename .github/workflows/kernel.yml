@@ -12,11 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install C toolchain
-        run: sudo apt-get update && sudo apt-get install -y clang lld
+        run: sudo apt-get update && sudo apt-get install -y clang lld binutils
       - name: Test physical frame allocator
         run: bash scripts/test-frame-allocator.sh
       - name: Build freestanding C kernel
         run: bash scripts/build-kernel.sh
+      - name: Validate kernel ELF load layout
+        run: bash scripts/check-kernel-elf.sh
 
   qemu-boot:
     runs-on: ubuntu-latest
