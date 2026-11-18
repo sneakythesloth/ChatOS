@@ -29,6 +29,18 @@ volatile struct limine_memmap_request limine_memmap_request = {
     .response = 0
 };
 
+__attribute__((used, section(".limine_requests"), aligned(8)))
+volatile struct limine_hhdm_request limine_hhdm_request = {
+    .id = {
+        0xc7b1dd30df4c8b88ULL,
+        0x0a82e883a194f07bULL,
+        0x48dcf1cb8ad2b852ULL,
+        0x63984e959a98244bULL
+    },
+    .revision = 0,
+    .response = 0
+};
+
 __attribute__((used, section(".limine_requests_end"), aligned(8)))
 static volatile uint64_t limine_requests_end[2] = {
     0xadc0e0531bb10d03ULL,
