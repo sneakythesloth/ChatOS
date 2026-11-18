@@ -4,9 +4,9 @@
 
 ChatOS is a new operating system project—not a Linux distribution, desktop theme, or macOS application. It will have its own kernel, system services, application environment, desktop shell, and visual identity.
 
-The product should feel polished and approachable to people accustomed to macOS, while taking inspiration from Omarchy's keyboard-driven workflow, tiling, terminal-friendly tools, and cohesive visual design. The long-term goal is to build the experience ourselves rather than assemble a conventional Linux desktop.
+The product should feel polished and approachable to people accustomed to macOS, while taking inspiration from Omarchy's keyboard-driven workflow, tiling, workspaces, terminal-friendly tools, and cohesive visual design. Omarchy is inspiration only; ChatOS will not copy it or depend on its Linux base.
 
-> **Project status:** Very early development. The first milestone is a minimal x86_64 kernel booting under UEFI through the Limine boot protocol. Most operating-system features described below are planned, not yet implemented.
+> **Project status:** Very early development. The current milestone is a minimal freestanding C kernel targeting x86_64 and the Limine boot protocol. Build and boot verification are still pending.
 
 ## Product principles
 
@@ -19,142 +19,70 @@ The product should feel polished and approachable to people accustomed to macOS,
 
 ## Operating modes
 
-### NO AI
-A complete operating experience with AI services disabled. Core system functions and applications must remain useful without an AI connection.
-
-### FULL AI
-ChatGPT is a first-class assistant. It can understand requests and, when authorized, perform supported tasks through the ChatOS computer-use system.
-
-### HYBRID
-The conventional desktop remains primary, with ChatGPT available on demand. Users can watch, pause, stop, or take over AI-operated tasks.
+- **NO AI:** Core system functions and applications remain useful with AI services disabled.
+- **FULL AI:** ChatGPT can perform supported tasks through the ChatOS computer-use system when authorized.
+- **HYBRID:** The conventional desktop remains primary, with ChatGPT available on demand. Users can watch, pause, stop, or take over AI-operated tasks.
 
 ## The second cursor
 
-ChatOS is intended to support two visually distinct pointers:
+ChatOS is intended to support two visually distinct pointers: a user-controlled pointer and a separate AI-controlled pointer. AI actions must be visible and understandable. Users must be able to pause, stop, and take control immediately. Consequential actions require explicit confirmation. This belongs in the future compositor and input architecture.
 
-- **User cursor:** Controlled by the user's mouse or trackpad.
-- **AI cursor:** A separate on-screen pointer controlled by ChatGPT during an approved task.
+## Platform direction
 
-The AI cursor should be able to point, click, type, drag, and scroll through supported system interfaces. Its actions must be visible and understandable. Users must be able to pause, stop, and take control immediately. Consequential actions require explicit confirmation.
+The first development target is x86_64 PCs and virtual machines. QEMU is the initial test environment; Limine provides the boot protocol and is not the ChatOS kernel.
 
-This will be implemented as a first-class part of the ChatOS compositor/windowing and input architecture—not as an afterthought. The exact mechanism will depend on the graphics and input stack built for the OS.
+ARM64 is a later architecture effort. Apple Silicon support is a long-term goal requiring platform-specific boot, firmware, and device-driver work; it is not currently supported.
 
-## Platform and architecture direction
+ChatOS will not be Linux-based. Linux application support requires a deliberate compatibility layer, including an ELF loader, Linux ABI/syscall compatibility, process and filesystem semantics, and packaging.
 
-### Initial target: x86_64 UEFI
+## Repository layout
 
-The first development target is x86_64 PCs and virtual machines booting through UEFI. QEMU will be the initial test environment. This gives the project a practical route to a real, independently bootable kernel.
+- `src/kernel.c`: kernel entry point and Limine request markers.
+- `src/arch/x86_64/`: x86_64 CPU and serial primitives.
+- `src/include/`: kernel headers.
+- `src/panic.c`: fatal kernel diagnostics.
+- `linker.ld`: kernel ELF layout.
+- `scripts/`: freestanding build, ISO creation, and QEMU launch.
+- `docs/`: architecture, roadmap, and milestone records.
 
-### Future hardware targets
+The kernel is written in **freestanding C11**. It does not use a hosted C runtime or standard library.
 
-- Physical x86_64 PCs after virtual-machine boot and driver foundations are stable.
-- ARM64 as a later architecture milestone.
-- Apple Silicon support is a long-term goal, not an initial compatibility claim. It requires substantial platform-specific boot, firmware, and device-driver work.
+## Build the kernel
 
-### Linux application compatibility
+Prerequisites: Clang with the x86_64-unknown-none-elf target, LLD, and Bash.
 
-ChatOS will not be Linux-based. Running Linux applications requires a deliberate compatibility strategy, including an ELF loader, Linux ABI/syscall compatibility, process and filesystem semantics, and a packaging/install workflow. This is a later milestone and will not be treated as automatic compatibility.
+    bash scripts/build-kernel.sh
 
-## Repository structure
+The output is `build/chatos.elf`.
 
-The initial kernel is written in Rust with no_std and targets x86_64. The first boot path uses the Limine boot protocol. The repository will grow into separate kernel, architecture, memory, process, driver, userspace, and desktop components as those systems are implemented.
+## Build a bootable ISO
 
-## Build and run the kernel
+Install xorriso and obtain the Limine BIOS/UEFI files plus the Limine utility. Set `LIMINE_DIR` to their directory:
 
-The initial milestone targets QEMU on x86_64.
-
-Prerequisites:
-- Rust toolchain and the x86_64-unknown-none target.
-- QEMU with x86_64 system emulation.
-- xorriso.
-- Limine bootloader binaries and the Limine utility.
-
-Build the bootable ISO (set LIMINE_DIR to the directory containing the Limine binaries):
-
-    rustup target add x86_64-unknown-none
     LIMINE_DIR=/path/to/limine bash scripts/build-iso.sh
 
-Run it in QEMU:
+Run in QEMU:
 
     bash scripts/run-qemu.sh
 
-The ISO includes Limine BIOS and UEFI boot paths. The QEMU helper uses the default firmware; set OVMF_CODE to an OVMF firmware image to test UEFI boot. The initial kernel reports startup over the emulated serial console. Build and boot instructions will expand as memory management, interrupts, and device support are added.
+Set `OVMF_CODE` to an OVMF firmware image to exercise UEFI boot. Otherwise QEMU uses its default firmware path. The kernel currently reports startup through COM1 serial output and halts.
 
-## Development roadmap
+## Roadmap
 
-### Milestone 0 — Bootable kernel foundation
-- [x] Establish a freestanding Rust kernel project.
-- [x] Add x86_64 entry point and Limine request markers.
-- [x] Add serial output and panic reporting.
-- [x] Add linker script, boot configuration, and QEMU ISO scripts.
-- [ ] Verify the first boot in QEMU and capture the boot log.
-
-### Milestone 1 — Boot protocol and physical memory
-- [ ] Parse and validate bootloader responses.
-- [ ] Read the UEFI/bootloader memory map.
-- [ ] Implement physical page-frame allocation.
-- [ ] Establish kernel virtual memory and page-table management.
-- [ ] Add heap allocation after the page allocator is reliable.
-
-### Milestone 2 — CPU, interrupts, and time
-- [ ] Set up the Global Descriptor Table and Task State Segment.
-- [ ] Configure the Interrupt Descriptor Table and exception handlers.
-- [ ] Add programmable interrupt controller support.
-- [ ] Add a monotonic clock and timer interrupts.
-- [ ] Improve diagnostics for CPU exceptions and kernel faults.
-
-### Milestone 3 — Drivers and hardware discovery
-- [ ] Enumerate PCI/PCIe devices.
-- [ ] Add storage and block-device abstractions.
-- [ ] Add keyboard and pointer input.
-- [ ] Add framebuffer and graphics output.
-- [ ] Establish a driver model and device permissions.
-
-### Milestone 4 — Processes and system calls
-- [ ] Define user/kernel privilege boundaries.
-- [ ] Implement context switching and scheduling.
-- [ ] Define a stable system-call ABI.
-- [ ] Load and execute user-space ELF programs.
-- [ ] Add process lifecycle, signals/events, and IPC foundations.
-
-### Milestone 5 — Storage and userspace
-- [ ] Implement a virtual filesystem layer.
-- [ ] Add an initial writable filesystem and persistent storage.
-- [ ] Build an init process and service manager.
-- [ ] Add a shell, terminal, and basic system utilities.
-- [ ] Define application packaging, installation, and updates.
-
-### Milestone 6 — Graphics and desktop
-- [ ] Build a graphics stack and compositor.
-- [ ] Implement windows, surfaces, focus, and input routing.
-- [ ] Create a keyboard-driven launcher and tiling window manager.
-- [ ] Add workspaces, status bar, notifications, and system settings.
-- [ ] Establish a coherent design system with polished motion and typography.
-- [ ] Build first-party applications.
-
-### Milestone 7 — ChatGPT and computer use
-- [ ] Implement secure AI service integration.
-- [ ] Define permission-scoped tools and user approval.
-- [ ] Add the separate AI cursor to the compositor.
-- [ ] Support visual targeting and controlled input injection.
-- [ ] Add action narration, pause/stop, user takeover, and audit history.
-- [ ] Implement NO AI, FULL AI, and HYBRID policies end to end.
-
-### Milestone 8 — Compatibility and hardware expansion
-- [ ] Improve x86_64 hardware support and test on physical machines.
-- [ ] Design an ARM64 architecture port.
-- [ ] Implement Linux ELF and ABI compatibility in a controlled environment.
-- [ ] Add Linux application installation and dependency management.
-- [ ] Evaluate Apple Silicon boot and device support as a separate platform effort.
+1. **M0 — Kernel bootstrap:** C entry point, Limine request markers, serial output, linker and boot scripts; then prove build and QEMU boot.
+2. **M1 — Memory:** validate boot responses, parse the memory map, implement physical frames and virtual memory.
+3. **M2 — CPU and interrupts:** GDT, TSS, IDT, exceptions, interrupt controllers, and timers.
+4. **M3 — Drivers:** PCI, storage, keyboard, pointer, framebuffer, and driver model.
+5. **M4 — Processes:** privilege separation, scheduler, system calls, ELF loader, and IPC.
+6. **M5 — Userspace:** VFS, init, service manager, shell, terminal, and package management.
+7. **M6 — Desktop:** compositor, tiling, workspaces, launcher, settings, and first-party apps.
+8. **M7 — AI computer use:** secure ChatGPT integration, permissions, second cursor, pause/stop, and takeover.
+9. **M8 — Compatibility and hardware:** Linux ABI compatibility, broader x86_64 support, ARM64, and Apple Silicon investigation.
 
 ## Current implementation status
 
-Only the minimal kernel bootstrap is being established. There is not yet a general-purpose OS: no scheduler, user processes, filesystem, graphics compositor, desktop, or Linux compatibility layer. Each milestone should add working, reviewable functionality and include build/test evidence before being marked complete.
-
-## Contributing
-
-Contributions and design discussions are welcome. Please identify the affected architecture, subsystem, and milestone. Kernel changes should include build instructions and reproducible test steps.
+The current kernel only disables interrupts, initializes COM1, prints a startup report, and halts. There is no scheduler, memory manager, filesystem, user process, graphics stack, desktop, or Linux compatibility layer yet. No successful build or boot is claimed until the checks have actually run.
 
 ## License
 
-No license has been specified yet. Until a license is added, do not assume the code is available for reuse, modification, or redistribution.
+No license has been specified. Until one is added, do not assume the code is available for reuse, modification, or redistribution.
