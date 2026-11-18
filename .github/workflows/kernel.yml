@@ -37,5 +37,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: chatos-qemu-serial-log
-          path: build/qemu-serial.log
+          path: |
+            build/qemu-serial.log
+            build/qemu-debug.log
+            build/qemu-machine.log
           if-no-files-found: ignore
