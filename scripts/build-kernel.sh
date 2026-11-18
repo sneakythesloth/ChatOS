@@ -31,16 +31,30 @@ CFLAGS=(
     -Werror
     -O2
     -Isrc/include
+    -Isrc/boot
+    -Isrc/memory
     -Isrc/arch/x86_64
 )
 
-"$CC" "${CFLAGS[@]}" -c src/kernel.c -o "$OBJECT_DIR/kernel.o"
-"$CC" "${CFLAGS[@]}" -c src/arch/x86_64/serial.c -o "$OBJECT_DIR/serial.o"
-"$CC" "${CFLAGS[@]}" -c src/panic.c -o "$OBJECT_DIR/panic.o"
+SOURCES=(
+    src/kernel.c
+    src/boot/limine.c
+    src/memory/memory.c
+    src/memory/frame_allocator.c
+    src/arch/x86_64/serial.c
+    src/panic.c
+)
+
+OBJECTS=()
+for source in "${SOURCES[@]}"; do
+    object="$OBJECT_DIR/${source//\//_}.o"
+    "$CC" "${CFLAGS[@]}" -c "$source" -o "$object"
+    OBJECTS+=("$object")
+done
 
 "$LD" -nostdlib -static -z max-page-size=0x1000 \
     -T linker.ld \
     -o "$BUILD_DIR/chatos.elf" \
-    "$OBJECT_DIR/kernel.o" "$OBJECT_DIR/serial.o" "$OBJECT_DIR/panic.o"
+    "${OBJECTS[@]}"
 
 echo "Built $BUILD_DIR/chatos.elf"
