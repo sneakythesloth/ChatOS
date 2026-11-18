@@ -1,17 +1,18 @@
 # ChatOS Development Roadmap
 
-The project advances through verifiable milestones. A milestone is not complete merely because files exist: it needs a successful build and a repeatable test or boot demonstration.
+Milestones require a successful build and a repeatable test or boot demonstration. Files existing in the repository do not by themselves complete a milestone.
 
-## M0 — Kernel bootstrap (scaffold committed)
-- [x] Rust freestanding project structure.
-- [x] x86_64 entry point and Limine request markers.
-- [x] COM1 serial console and panic handler.
-- [x] Linker script and Limine boot configuration.
-- [x] ISO and QEMU helper scripts.
-- [ ] Build and boot under QEMU; save the serial log.
+## M0 — C kernel bootstrap (scaffold committed; verification pending)
+- [x] Freestanding C11 kernel entry point and Limine request markers.
+- [x] x86_64 interrupt-disable and halt primitives.
+- [x] COM1 serial console and panic routine.
+- [x] Linker script, Limine configuration, and build/ISO/QEMU scripts.
+- [ ] Build with Clang/LLD and verify the ELF.
+- [ ] Boot under QEMU and save the serial log.
+- [ ] Verify UEFI path with OVMF.
 
 ## M1 — Boot information and memory
-- [ ] Add typed Limine response structures.
+- [ ] Add ABI-correct Limine response structures.
 - [ ] Validate bootloader base revision and memory-map response.
 - [ ] Parse memory regions and reserve kernel/bootloader-owned ranges.
 - [ ] Implement a physical frame allocator.
@@ -70,9 +71,4 @@ The project advances through verifiable milestones. A milestone is not complete 
 
 ## Release gates
 
-Every major subsystem should include:
-- Build instructions and compiler/toolchain versions.
-- Unit or integration tests where possible.
-- QEMU or hardware reproduction steps.
-- Serial/debug logs for boot-critical changes.
-- A short architecture note for non-obvious design decisions.
+Every major subsystem should include build instructions, compiler/toolchain versions, tests where possible, QEMU or hardware reproduction steps, serial/debug logs for boot-critical changes, and architecture notes for non-obvious decisions.
