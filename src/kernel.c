@@ -32,16 +32,16 @@ void _start(void) {
     pic_initialize();
     pit_initialize(100U);
     pic_enable_irq(0U);
-    serial_write("PIC: IRQ vectors remapped; PIT channel 0 programmed at 100 Hz.\\r\\n");
+    serial_write("PIC: IRQ vectors remapped; PIT channel 0 programmed at 100 Hz.\r\n");
 
 #ifdef CHATOS_TIMER_SELF_TEST
-    serial_write("M2 timer test: waiting for five PIT interrupts.\\r\\n");
+    serial_write("M2 timer test: waiting for five PIT interrupts.\r\n");
     __asm__ volatile ("sti" : : : "memory");
     while (timer_ticks_read() < 5U) {
         __asm__ volatile ("hlt" : : : "memory");
     }
     __asm__ volatile ("cli" : : : "memory");
-    serial_write("PIT timer: 5 ticks received.\\r\\n");
+    serial_write("PIT timer: 5 ticks received.\r\n");
 #endif
     serial_write("Physical frames: online.\r\n");
     serial_write("HHDM: online.\r\n");
