@@ -82,20 +82,17 @@ Set OVMF_CODE to an OVMF firmware image to test the UEFI path.
 
 ## Current kernel capabilities
 
-- Freestanding C11 x86_64 entry point.
-- Limine base revision 3 request and memory-map response.
-- Validation of memory-map response and entries.
-- A fixed-capacity bitmap physical frame allocator for the first 64 GiB of physical address space.
-- Limine HHDM physical/virtual address helpers.
-- Early x86_64 page-table discovery, 4 KiB mapping, unmapping, and translation helpers (not yet runtime-boot verified).
+- Freestanding C11 x86_64 entry point and Limine base revision 3 boot requests.
+- Validated Limine memory-map response and usable-memory accounting.
+- Fixed-capacity bitmap physical-frame allocator for the first 64 GiB, with host-side allocation tests.
+- Limine HHDM discovery and basic physical/virtual conversion helpers.
+- Early x86_64 active-page-table discovery and 4 KiB map/unmap/translate primitives.
 - COM1 serial diagnostics and a fatal panic path.
-- Host-side allocator tests run by GitHub Actions.
-- Limine HHDM offset discovery and physical/virtual conversion helpers.
-- Early x86_64 page-table discovery, mapping, unmapping, and translation primitives. User mappings are deliberately rejected until isolated address spaces exist.
+- GitHub Actions builds the freestanding kernel and runs the allocator tests.
 
-The M1 CI run passed: host-side allocator tests and the freestanding kernel build both succeeded. This is compile/test evidence, not proof that the kernel boots under QEMU or on physical hardware.
+The latest verified CI runs prove compilation/linking and the host allocator tests pass. They do not prove a successful QEMU boot or physical-hardware operation. HHDM and page-table code still require runtime validation.
 
-The frame allocator returns physical addresses. The HHDM and page-table APIs are early primitives, not a complete virtual-memory manager: there is no address-space isolation, page-table reclamation, zero-on-allocation for general frames, guard-page policy, or SMP locking. The bitmap is static and allocations are currently single-CPU only. The current page-table code has compile/CI coverage but still needs QEMU runtime validation.
+The memory subsystem is early bootstrap code, not a complete virtual-memory manager. It has no address-space isolation, page-table reclamation, general page ownership, guard-page policy, or SMP/TLB-shootdown support. User mappings are intentionally rejected until privilege-separated address spaces are implemented. The physical-frame bitmap is static and allocation is single-CPU only.
 
 There is no scheduler, IDT/exception handling, filesystem, user process, graphics stack, desktop, networking, or Linux compatibility layer yet. Do not treat planned capabilities as implemented.
 
