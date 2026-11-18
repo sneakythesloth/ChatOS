@@ -1,0 +1,8 @@
+/target/
+/iso_root/
+/ChatOS.iso
+*.elf
+*.o
+*.img
+*.log
+.DS_Store
