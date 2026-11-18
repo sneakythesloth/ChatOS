@@ -5,6 +5,7 @@
 
 #define VM_PAGE_PRESENT 0x001ULL
 #define VM_PAGE_WRITE   0x002ULL
+/* Reserved; vm_map_page rejects user mappings until address spaces exist. */
 #define VM_PAGE_USER    0x004ULL
 
 int vm_initialize(void);
