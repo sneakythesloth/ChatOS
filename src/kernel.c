@@ -9,6 +9,8 @@ __attribute__((noreturn, section(".text.entry")))
 void _start(void) {
     cpu_disable_interrupts();
     serial_init();
+    interrupts_initialize();
+    serial_write("M2: IDT installed; CPU exceptions have fatal diagnostic handlers.\\r\\n");
 
     serial_write("\r\n");
     serial_write("ChatOS kernel starting...\r\n");
@@ -22,8 +24,6 @@ void _start(void) {
     serial_write("Physical frames: online.\r\n");
     serial_write("HHDM: online.\r\n");
     serial_write("Virtual memory: current page tables discovered.\r\n");
-    interrupts_initialize();
-    serial_write("M2: IDT installed; CPU exceptions have fatal diagnostic handlers.\\r\\n");
     serial_write("Kernel bootstrap complete. CPU halted with interrupts disabled.\\r\\n");
 
     for (;;) {
