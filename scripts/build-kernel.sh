@@ -41,6 +41,8 @@ SOURCES=(
     src/boot/limine.c
     src/memory/memory.c
     src/memory/frame_allocator.c
+    src/memory/hhdm.c
+    src/memory/vm.c
     src/arch/x86_64/serial.c
     src/panic.c
 )
