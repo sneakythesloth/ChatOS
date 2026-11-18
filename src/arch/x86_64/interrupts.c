@@ -3,6 +3,8 @@
 #include "interrupts.h"
 #include "serial.h"
 #include "panic.h"
+#include "pic.h"
+#include "timer.h"
 
 #define IDT_ENTRY_COUNT 256U
 #define IDT_INTERRUPT_GATE 0x8EU
@@ -59,6 +61,7 @@ static uint8_t double_fault_stack[DOUBLE_FAULT_STACK_SIZE] __attribute__((aligne
 
 extern void (*exception_stub_table[32])(void);
 extern void isr255(void);
+extern void irq0_stub(void);
 extern void gdt_load(const struct descriptor_pointer *descriptor);
 
 static const char *const exception_names[32] = {
@@ -168,7 +171,7 @@ void interrupts_initialize(void) {
     };
     __asm__ volatile ("lidt %0" : : "m"(descriptor) : "memory");
 
-    serial_write("IDT: 256 interrupt gates installed; CPU exception stubs online.\r\n");
+    serial_write("IDT: 256 gates installed; CPU exception stubs and IRQ0 handler online.\r\n");
 }
 
 __attribute__((noreturn))
@@ -201,4 +204,17 @@ void interrupt_exception_dispatch(const struct exception_frame *frame) {
     }
 
     kernel_panic("CPU exception is fatal; system halted.");
+}
+
+/*
+ * IRQ dispatch is deliberately separate from fatal exception dispatch.
+ * At this stage only IRQ0 is unmasked; all other legacy PIC lines stay masked.
+ */
+void interrupt_irq_dispatch(const struct exception_frame *frame) {
+    if (frame == 0 || frame->vector != 32U) {
+        kernel_panic("Unexpected or malformed hardware IRQ frame.");
+    }
+
+    timer_irq_handler();
+    pic_send_eoi(0U);
 }
