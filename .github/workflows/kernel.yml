@@ -1,0 +1,19 @@
+name: Kernel
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust target
+        run: rustup target add x86_64-unknown-none
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Build kernel
+        run: cargo build --release
