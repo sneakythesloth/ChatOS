@@ -9,6 +9,15 @@ TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-20}"
 LOG_FILE="${QEMU_LOG_FILE:-build/qemu-serial.log}"
 DEBUG_FILE="${QEMU_DEBUG_FILE:-build/qemu-debug.log}"
 
+QEMU_FIRMWARE_ARGS=()
+if [[ -n "${OVMF_CODE:-}" ]]; then
+    test -f "$OVMF_CODE" || {
+        echo "OVMF_CODE does not point to a firmware image: $OVMF_CODE" >&2
+        exit 1
+    }
+    QEMU_FIRMWARE_ARGS=(-bios "$OVMF_CODE")
+fi
+
 command -v "$QEMU" >/dev/null 2>&1 || {
     echo "Missing QEMU executable: $QEMU" >&2
     exit 1
