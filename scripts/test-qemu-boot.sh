@@ -54,9 +54,16 @@ if [[ "$qemu_status" -ne 124 && "$qemu_status" -ne 0 ]]; then
     exit "$qemu_status"
 fi
 
-grep -Fq "Kernel bootstrap complete." "$LOG_FILE" || {
-    echo "Kernel did not reach the bootstrap-complete marker." >&2
+grep -Fq "${EXPECTED_SERIAL_MARKER:-Kernel bootstrap complete.}" "$LOG_FILE" || {
+    echo "Expected serial marker was not observed: ${EXPECTED_SERIAL_MARKER:-Kernel bootstrap complete.}" >&2
     exit 1
 }
+
+if [[ -n "${EXPECTED_PANIC_MARKER:-}" ]]; then
+    grep -Fq "$EXPECTED_PANIC_MARKER" "$LOG_FILE" || {
+        echo "Expected panic marker was not observed: $EXPECTED_PANIC_MARKER" >&2
+        exit 1
+    }
+fi
 
 echo "QEMU boot smoke test passed."
