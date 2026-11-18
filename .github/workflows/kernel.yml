@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install boot-test dependencies
-        run: sudo apt-get update && sudo apt-get install -y clang lld xorriso qemu-system-x86 git make
+        run: sudo apt-get update && sudo apt-get install -y clang lld xorriso qemu-system-x86 git make ovmf
       - name: Build Limine bootloader
         run: |
           git clone --depth=1 --branch=v8.x-binary https://github.com/limine-bootloader/limine.git limine
@@ -34,6 +34,19 @@ jobs:
         run: LIMINE_DIR="$PWD/limine" bash scripts/build-iso.sh
       - name: Boot ChatOS in QEMU
         run: bash scripts/test-qemu-boot.sh
+      - name: Boot ChatOS through UEFI in QEMU
+        run: |
+          if [[ -f /usr/share/OVMF/OVMF_CODE.fd ]]; then
+            OVMF_CODE=/usr/share/OVMF/OVMF_CODE.fd
+          elif [[ -f /usr/share/OVMF/OVMF_CODE_4M.fd ]]; then
+            OVMF_CODE=/usr/share/OVMF/OVMF_CODE_4M.fd
+          else
+            echo "No OVMF_CODE firmware image found." >&2
+            find /usr/share -iname 'OVMF_CODE*.fd' -print
+            exit 1
+          fi
+          export OVMF_CODE
+          bash scripts/test-qemu-boot.sh
       - name: Test CPU exception handling in QEMU
         env:
           LIMINE_DIR: ${{ github.workspace }}/limine
