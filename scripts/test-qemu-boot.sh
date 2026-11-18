@@ -7,6 +7,7 @@ cd "$ROOT_DIR"
 QEMU="${QEMU:-qemu-system-x86_64}"
 TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-20}"
 LOG_FILE="${QEMU_LOG_FILE:-build/qemu-serial.log}"
+DEBUG_FILE="${QEMU_DEBUG_FILE:-build/qemu-debug.log}"
 
 command -v "$QEMU" >/dev/null 2>&1 || {
     echo "Missing QEMU executable: $QEMU" >&2
@@ -17,24 +18,34 @@ test -f ChatOS.iso || {
     exit 1
 }
 
-mkdir -p "$(dirname "$LOG_FILE")"
-rm -f "$LOG_FILE"
+mkdir -p "$(dirname "$LOG_FILE")" "$(dirname "$DEBUG_FILE")"
+rm -f "$LOG_FILE" "$DEBUG_FILE"
 
 set +e
-timeout --signal=TERM "$TIMEOUT_SECONDS" "$QEMU" \
+timeout --signal=TERM --kill-after=3s "$TIMEOUT_SECONDS" "$QEMU" \
     -machine q35 \
     -cpu qemu64 \
     -m 512M \
     -display none \
     -monitor none \
     -serial "file:$LOG_FILE" \
+    -debugcon "file:$DEBUG_FILE" \
+    -global isa-debugcon.iobase=0xe9 \
+    -d guest_errors,int,cpu_reset \
+    -D build/qemu-machine.log \
+    -boot order=d,menu=on \
     -no-reboot \
     -no-shutdown \
     -cdrom ChatOS.iso
 qemu_status=$?
 set -e
 
-cat "$LOG_FILE"
+echo "===== ChatOS serial output ====="
+cat "$LOG_FILE" 2>/dev/null || true
+echo "===== QEMU debug console ====="
+cat "$DEBUG_FILE" 2>/dev/null || true
+echo "===== QEMU machine diagnostics (last 160 lines) ====="
+tail -n 160 build/qemu-machine.log 2>/dev/null || true
 
 # QEMU is expected to remain halted after the kernel reports successful
 # bootstrap; timeout (124) is therefore a normal test termination.
