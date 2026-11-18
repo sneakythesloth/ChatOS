@@ -2,6 +2,8 @@
 #include "limine.h"
 #include "memory.h"
 #include "frame_allocator.h"
+#include "hhdm.h"
+#include "vm.h"
 #include "serial.h"
 #include "panic.h"
 
@@ -45,6 +47,9 @@ int memory_initialize(void) {
     if (!frame_allocator_init(response)) {
         kernel_panic("Physical frame allocator initialization failed.");
     }
+
+    hhdm_initialize();
+    vm_initialize();
 
     serial_write("Usable memory reported: ");
     serial_write_u64(usable_bytes / (1024ULL * 1024ULL));
