@@ -6,6 +6,7 @@
 #include "interrupts.h"
 #include "pic.h"
 #include "timer.h"
+#include "panic.h"
 
 int memory_runtime_self_test(void);
 
