@@ -83,7 +83,7 @@ A milestone is complete only when its acceptance tests have evidence. Committing
 - [ ] Native installer: verified partition workflow, backup warnings, destructive-action confirmation, and recovery path.
 - [ ] Shared release pipeline for Window and Native editions.
 
-## M9 — 
+## M9 — Compatibility and hardware
 - [ ] Broader x86_64 hardware and firmware support.
 - [ ] ARM64 architecture port.
 - [ ] Linux ELF and syscall ABI compatibility.
