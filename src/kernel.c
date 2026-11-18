@@ -7,6 +7,8 @@
 #include "pic.h"
 #include "timer.h"
 
+int memory_runtime_self_test(void);
+
 __attribute__((noreturn, section(".text.entry")))
 void _start(void) {
     cpu_disable_interrupts();
@@ -28,6 +30,14 @@ void _start(void) {
 
     serial_write("M1: validating boot information and memory...\r\n");
     memory_initialize();
+
+#ifdef CHATOS_MEMORY_SELF_TEST
+    serial_write("M1 memory test: exercising HHDM and active page tables.\r\n");
+    if (!memory_runtime_self_test()) {
+        kernel_panic("HHDM/page-table runtime self-test failed.");
+    }
+    serial_write("Memory runtime test: HHDM alias, map/translate/unmap and frame free passed.\r\n");
+#endif
 
     pic_initialize();
     pit_initialize(100U);
