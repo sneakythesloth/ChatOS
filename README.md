@@ -6,7 +6,7 @@ ChatOS is not a Linux distribution, desktop theme, or macOS application. It is i
 
 The product target is a polished, approachable experience for people accustomed to macOS, combined with an Omarchy-inspired keyboard-driven workflow: tiling, workspaces, terminal-first tools, and a cohesive visual system. Omarchy is inspiration only; ChatOS will not copy it or depend on its Linux base.
 
-> **Status:** Early kernel development. The current code requests the Limine memory map and initializes a simple physical 4 KiB frame allocator. M1 build and boot verification remain in progress.
+> **Status:** Early kernel development. The C kernel builds in GitHub Actions and the physical-frame allocator tests pass. QEMU boot verification remains outstanding.
 
 ## Principles
 
@@ -41,16 +41,18 @@ ARM64 is a later architecture effort. Apple Silicon support is a long-term goal 
 - src/include/: shared kernel headers.
 - src/panic.c: fatal kernel diagnostics.
 - linker.ld: kernel ELF layout.
-- scripts/: kernel build, ISO creation, and QEMU launch.
+- scripts/: kernel build, tests, ISO creation, and QEMU launch.
+- tests/: host-side kernel subsystem tests.
 - docs/: architecture, roadmap, and milestone records.
 
-## Build
+## Build and test
 
-Prerequisites: Clang with the x86_64-unknown-none-elf target, LLD, and Bash.
+Prerequisites: Clang with the x86_64-unknown-none-elf target, LLD, a host C compiler, and Bash.
 
+    bash scripts/test-frame-allocator.sh
     bash scripts/build-kernel.sh
 
-The output is build/chatos.elf.
+The kernel output is build/chatos.elf.
 
 For a bootable ISO, install xorriso and obtain Limine's BIOS/UEFI image files and executable. Then:
 
@@ -66,6 +68,9 @@ Set OVMF_CODE to an OVMF firmware image to test the UEFI path.
 - Validation of memory-map response and entries.
 - A fixed-capacity bitmap physical frame allocator for the first 64 GiB of physical address space.
 - COM1 serial diagnostics and a fatal panic path.
+- Host-side allocator tests run by GitHub Actions.
+
+The M1 CI run passed: host-side allocator tests and the freestanding kernel build both succeeded. This is compile/test evidence, not proof that the kernel boots under QEMU or on physical hardware.
 
 The frame allocator returns physical addresses; it does not yet map or zero allocated pages. It is an early bootstrap allocator, not a complete virtual-memory manager. The bitmap is static, allocations are currently single-CPU only, and SMP locking is not implemented.
 
