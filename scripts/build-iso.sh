@@ -15,7 +15,7 @@ for tool in clang ld.lld xorriso; do
     }
 done
 
-for file in "$LIMINE_DIR/limine-bios-cd.bin" "$LIMINE_DIR/limine-uefi-cd.bin" "$LIMINE_DIR/limine-bios.sys" "$LIMINE_DIR/limine"; do
+for file in "$LIMINE_DIR/limine-bios-cd.bin" "$LIMINE_DIR/limine-uefi-cd.bin" "$LIMINE_DIR/limine-bios.sys" "$LIMINE_DIR/BOOTX64.EFI" "$LIMINE_DIR/limine"; do
     test -f "$file" || {
         echo "Missing Limine file: $file" >&2
         echo "Set LIMINE_DIR to the directory containing the Limine binaries and utility." >&2
@@ -26,14 +26,16 @@ done
 bash scripts/build-kernel.sh
 
 rm -rf "$ISO_ROOT"
-mkdir -p "$ISO_ROOT/boot"
+mkdir -p "$ISO_ROOT/boot" "$ISO_ROOT/EFI/BOOT"
 cp "$KERNEL" "$ISO_ROOT/boot/chatos.elf"
 cp limine.conf "$ISO_ROOT/limine.conf"
 cp "$LIMINE_DIR/limine-bios-cd.bin" "$ISO_ROOT/"
 cp "$LIMINE_DIR/limine-bios.sys" "$ISO_ROOT/"
 cp "$LIMINE_DIR/limine-uefi-cd.bin" "$ISO_ROOT/"
+cp "$LIMINE_DIR/BOOTX64.EFI" "$ISO_ROOT/EFI/BOOT/BOOTX64.EFI"
 
 xorriso -as mkisofs \
+    -R -r -J \
     -b limine-bios-cd.bin \
     -no-emul-boot -boot-load-size 4 -boot-info-table \
     --efi-boot limine-uefi-cd.bin \
