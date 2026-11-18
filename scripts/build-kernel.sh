@@ -62,6 +62,9 @@ done
 ASM_OBJECT="$OBJECT_DIR/src_arch_x86_64_interrupts.o"
 "$CC" --target=x86_64-unknown-none-elf -m64 -c src/arch/x86_64/interrupts.S -o "$ASM_OBJECT"
 OBJECTS+=("$ASM_OBJECT")
+GDT_OBJECT="$OBJECT_DIR/src_arch_x86_64_gdt.o"
+"$CC" --target=x86_64-unknown-none-elf -m64 -c src/arch/x86_64/gdt.S -o "$GDT_OBJECT"
+OBJECTS+=("$GDT_OBJECT")
 
 "$LD" -nostdlib -static -z max-page-size=0x1000 \
     -T linker.ld \
