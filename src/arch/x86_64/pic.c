@@ -25,9 +25,6 @@ static inline void io_wait(void) {
 }
 
 void pic_initialize(void) {
-    const uint8_t master_mask = inb(PIC1_DATA);
-    const uint8_t slave_mask = inb(PIC2_DATA);
-
     /* ICW1: begin initialization, expect ICW4. */
     outb(PIC1_COMMAND, 0x11U);
     io_wait();
@@ -56,8 +53,6 @@ void pic_initialize(void) {
     outb(PIC1_DATA, 0xFFU);
     outb(PIC2_DATA, 0xFFU);
 
-    (void)master_mask;
-    (void)slave_mask;
 }
 
 void pic_enable_irq(uint8_t irq) {
